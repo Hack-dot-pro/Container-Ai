@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PurDash.fig — Kiến Trúc Chi Tiết</title>
+<style>
+  body { margin: 0; background: #eef1f6; font-family: 'Segoe UI', sans-serif; }
+  .wrap { max-width: 2160px; margin: 0 auto; padding: 20px; }
+  svg { display: block; width: 100%; height: auto; background: #fafbfc; box-shadow: 0 0 30px rgba(0,0,0,.12); border-radius: 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<svg viewBox="0 0 2100 2786" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<rect x="0" y="0" width="2100" height="100" fill="#343c6a"/>
+<text x="1050" y="38" text-anchor="middle" font-size="26" font-weight="700" fill="#ffffff" font-family="Inter, Segoe UI, sans-serif">PurDash.fig — Sơ Đồ Kiến Trúc Chi Tiết (Detailed Architecture)</text>
+<text x="1050" y="68" text-anchor="middle" font-size="15" fill="#b9c4e0" font-family="Inter, Segoe UI, sans-serif">BankDash — Dashboard UI Kit (Community) • 6,802 nodes • kiwi v106 • Canvas 1440px • Xuất: 19/08/2026</text>
+<rect x="900" y="150" width="300" height="56" rx="8" fill="#2d60ff" stroke="#2d60ff" stroke-width="1.5"/>
+<text x="1050" y="178" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="700" fill="#ffffff" font-family="Inter, Segoe UI, sans-serif">PurDash.fig  (File)</text>
+<line x1="1050" y1="206" x2="1050" y2="236" stroke="#718ebf" stroke-width="1.5"/>
+<line x1="600" y1="236" x2="1500" y2="236" stroke="#718ebf" stroke-width="1.5"/>
+<line x1="600" y1="236" x2="600" y2="258" stroke="#718ebf" stroke-width="1.5"/>
+<line x1="1500" y1="236" x2="1500" y2="258" stroke="#718ebf" stroke-width="1.5"/>
+<rect x="400" y="258" width="400" height="52" rx="8" fill="undefined" stroke="#2d60ff" stroke-width="1.5"/>
+<text x="600" y="284" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="700" fill="#343c6a" font-family="Inter, Segoe UI, sans-serif">CANVAS: "😍 Design"  — 33 Frames (Giao diện)</text>
+<rect x="1300" y="258" width="400" height="52" rx="8" fill="undefined" stroke="#16dbcc" stroke-width="1.5"/>
+<text x="1500" y="284" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="700" fill="#343c6a" font-family="Inter, Segoe UI, sans-serif">CANVAS: "Internal Only Canvas"  — Design Tokens</text>
+<text x="1050" y="334" text-anchor="middle" font-size="15" font-weight="700" fill="#343c6a" font-family="Inter, Segoe UI, sans-serif">⬇ Cây phân rã (decompose) chi tiết từng nhánh</text>
+<text x="60" y="354" font-size="16" font-weight="700" fill="#343c6a" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">😍 DESIGN — 33 FRAMES / PAGES (bố cục đầy đủ cho 3 thiết bị)</text>
+<rect x="60" y="372" width="640" height="530" rx="8" fill="#eef4ff" stroke="#2d60ff" stroke-width="1.5"/>
+<text x="380" y="637" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="700" fill="#343c6a" font-family="Inter, Segoe UI, sans-serif">DESKTOP — 1440 × 1024~1319</text>
+<rect x="84" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#2d60ff" stroke-width="1.5"/>
+<text x="232.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Main Dashboard</text>
+<text x="232.5" y="476" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Trang chủ tổng quan</text>
+<rect x="379" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#2d60ff" stroke-width="1.5"/>
+<text x="527.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Accounts</text>
+<text x="527.5" y="476" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Tài khoản</text>
+<rect x="84" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#2d60ff" stroke-width="1.5"/>
+<text x="232.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Credit Cards</text>
+<text x="232.5" y="524" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Thẻ tín dụng</text>
+<rect x="379" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#2d60ff" stroke-width="1.5"/>
+<text x="527.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Loan</text>
+<text x="527.5" y="524" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Khoản vay</text>
+<rect x="84" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#2d60ff" stroke-width="1.5"/>
+<text x="232.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Investments</text>
+<text x="232.5" y="572" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Đầu tư</text>
+<rect x="379" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#2d60ff" stroke-width="1.5"/>
+<text x="527.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Transaction</text>
+<text x="527.5" y="572" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Giao dịch</text>
+<rect x="84" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#2d60ff" stroke-width="1.5"/>
+<text x="232.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Setting Page 1</text>
+<text x="232.5" y="620" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Cài đặt — Profile</text>
+<rect x="379" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#2d60ff" stroke-width="1.5"/>
+<text x="527.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Setting Page 2</text>
+<text x="527.5" y="620" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Cài đặt — Preferences</text>
+<rect x="84" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#2d60ff" stroke-width="1.5"/>
+<text x="232.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Setting Page 3</text>
+<text x="232.5" y="668" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Cài đặt — Security</text>
+<rect x="379" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#2d60ff" stroke-width="1.5"/>
+<text x="527.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Services</text>
+<text x="527.5" y="668" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Dịch vụ</text>
+<rect x="740" y="372" width="640" height="530" rx="8" fill="#f0fbfa" stroke="#16dbcc" stroke-width="1.5"/>
+<text x="1060" y="637" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="700" fill="#343c6a" font-family="Inter, Segoe UI, sans-serif">TABLET — 1024 × 771~1002</text>
+<rect x="764" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#16dbcc" stroke-width="1.5"/>
+<text x="912.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Dashboard for Tab</text>
+<text x="912.5" y="476" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Trang chủ</text>
+<rect x="1059" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#16dbcc" stroke-width="1.5"/>
+<text x="1207.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Transaction for Tab</text>
+<text x="1207.5" y="476" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Giao dịch</text>
+<rect x="764" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#16dbcc" stroke-width="1.5"/>
+<text x="912.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Accounts Tab</text>
+<text x="912.5" y="524" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Tài khoản</text>
+<rect x="1059" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#16dbcc" stroke-width="1.5"/>
+<text x="1207.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Investments Tab</text>
+<text x="1207.5" y="524" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Đầu tư</text>
+<rect x="764" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#16dbcc" stroke-width="1.5"/>
+<text x="912.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Credit Cards Tab</text>
+<text x="912.5" y="572" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Thẻ tín dụng</text>
+<rect x="1059" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#16dbcc" stroke-width="1.5"/>
+<text x="1207.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Loans Tab</text>
+<text x="1207.5" y="572" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Khoản vay</text>
+<rect x="764" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#16dbcc" stroke-width="1.5"/>
+<text x="912.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Services Tab</text>
+<text x="912.5" y="620" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Dịch vụ</text>
+<rect x="1059" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#16dbcc" stroke-width="1.5"/>
+<text x="1207.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Setting page 1 Tab</text>
+<text x="1207.5" y="620" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Cài đặt 1</text>
+<rect x="764" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#16dbcc" stroke-width="1.5"/>
+<text x="912.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Setting page 2 Tab</text>
+<text x="912.5" y="668" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Cài đặt 2</text>
+<rect x="1059" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#16dbcc" stroke-width="1.5"/>
+<text x="1207.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Setting page 3 Tab</text>
+<text x="1207.5" y="668" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Cài đặt 3</text>
+<rect x="1420" y="372" width="640" height="530" rx="8" fill="#fff3f7" stroke="#ff82ac" stroke-width="1.5"/>
+<text x="1740" y="637" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="700" fill="#343c6a" font-family="Inter, Segoe UI, sans-serif">MOBILE — 375 × 812~1983</text>
+<rect x="1444" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#ff82ac" stroke-width="1.5"/>
+<text x="1592.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Dashboard for Mobile</text>
+<text x="1592.5" y="476" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Trang chủ</text>
+<rect x="1739" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#ff82ac" stroke-width="1.5"/>
+<text x="1887.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Transaction for Mobile</text>
+<text x="1887.5" y="476" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Giao dịch</text>
+<rect x="1444" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#ff82ac" stroke-width="1.5"/>
+<text x="1592.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Accounts for Mobile</text>
+<text x="1592.5" y="524" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Tài khoản</text>
+<rect x="1739" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#ff82ac" stroke-width="1.5"/>
+<text x="1887.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Investments for Mobile</text>
+<text x="1887.5" y="524" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Đầu tư</text>
+<rect x="1444" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#ff82ac" stroke-width="1.5"/>
+<text x="1592.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Credit Cards for Mobile</text>
+<text x="1592.5" y="572" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Thẻ tín dụng</text>
+<rect x="1739" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#ff82ac" stroke-width="1.5"/>
+<text x="1887.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Loans for Mobile</text>
+<text x="1887.5" y="572" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Khoản vay</text>
+<rect x="1444" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#ff82ac" stroke-width="1.5"/>
+<text x="1592.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Services for Mobile</text>
+<text x="1592.5" y="620" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Dịch vụ</text>
+<rect x="1739" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#ff82ac" stroke-width="1.5"/>
+<text x="1887.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Setting page 1 for Mobile</text>
+<text x="1887.5" y="620" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Cài đặt 1</text>
+<rect x="1444" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#ff82ac" stroke-width="1.5"/>
+<text x="1592.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Setting page 2 for Mobile</text>
+<text x="1592.5" y="668" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Cài đặt 2</text>
+<rect x="1739" y="372" width="297" height="34" rx="8" fill="#ffffff" stroke="#ff82ac" stroke-width="1.5"/>
+<text x="1887.5" y="389" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif">Setting page 3 for Mobile</text>
+<text x="1887.5" y="668" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Cài đặt 3</text>
+<text x="60" y="932" font-size="14" font-weight="700" fill="#343c6a" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Frames mô phỏng breakpoint (mockup thiết bị)</text>
+<rect x="100" y="948" width="430" height="70" rx="8" fill="#fff8ec" stroke="#feaa09" stroke-width="1.5"/>
+<text x="315" y="983" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#343c6a" font-family="Inter, Segoe UI, sans-serif">Desktop — 2041×427</text>
+<rect x="640" y="948" width="430" height="70" rx="8" fill="#fdf0f4" stroke="#fe5c73" stroke-width="1.5"/>
+<text x="855" y="983" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#343c6a" font-family="Inter, Segoe UI, sans-serif">Tab — 1638×427</text>
+<rect x="1180" y="948" width="430" height="70" rx="8" fill="#eaf9ff" stroke="#5ac8fa" stroke-width="1.5"/>
+<text x="1395" y="983" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#343c6a" font-family="Inter, Segoe UI, sans-serif">Mobile — 1712×427</text>
+<line x1="1500" y1="310" x2="1500" y2="330" stroke="#16dbcc" stroke-width="1.5" stroke-dasharray="5,4"/>
+<line x1="1500" y1="330" x2="2080" y2="330" stroke="#16dbcc" stroke-width="1.5"/>
+<line x1="2080" y1="330" x2="2080" y2="1038" stroke="#16dbcc" stroke-width="1.5"/>
+<line x1="2080" y1="1038" x2="2040" y2="1038" stroke="#16dbcc" stroke-width="1.5"/>
+<rect x="1360" y="1058" width="680" height="700" rx="8" fill="#f0fbfa" stroke="#16dbcc" stroke-width="1.5"/>
+<text x="1700" y="1408" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="700" fill="#343c6a" font-family="Inter, Segoe UI, sans-serif">DESIGN TOKENS — Hệ thống định nghĩa</text>
+<text x="1400" y="1110" font-size="13" font-weight="700" fill="#343c6a" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Color / Fill</text>
+<defs><linearGradient id="dbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#123288"/><stop offset="1" stop-color="#16dbaa"/></linearGradient></defs>
+<rect x="1400" y="1116" width="36" height="36" rx="6" fill="#feaa09" stroke="#bbb" stroke-width="1"/>
+<text x="1400" y="1168" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Primary 1</text>
+<rect x="1476" y="1116" width="36" height="36" rx="6" fill="#343c6a" stroke="#bbb" stroke-width="1"/>
+<text x="1476" y="1168" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Primary 2</text>
+<rect x="1552" y="1116" width="36" height="36" rx="6" fill="#2d60ff" stroke="#bbb" stroke-width="1"/>
+<text x="1552" y="1168" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Primary 3</text>
+<rect x="1628" y="1116" width="36" height="36" rx="6" fill="#fe5c73" stroke="#bbb" stroke-width="1"/>
+<text x="1628" y="1168" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Secondary</text>
+<rect x="1704" y="1116" width="36" height="36" rx="6" fill="#4f4f4f" stroke="#bbb" stroke-width="1"/>
+<text x="1704" y="1168" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">text|dark</text>
+<rect x="1400" y="1186" width="36" height="36" rx="6" fill="#e6eff5" stroke="#bbb" stroke-width="1"/>
+<text x="1400" y="1238" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">icon|light</text>
+<rect x="1476" y="1186" width="36" height="36" rx="6" fill="url(#dbg)" stroke="#bbb" stroke-width="1"/>
+<text x="1476" y="1238" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Dark Blue Gradient</text>
+<text x="1400" y="1276" font-size="13" font-weight="700" fill="#343c6a" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Typography — Inter</text>
+<rect x="1400" y="1288" width="580" height="26" rx="4" fill="#ffffff" stroke="#e6eff5"/>
+<text x="1412" y="1306" font-size="11" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Heading 1 — Semi Bold 28px</text>
+<text x="1988" y="1306" font-size="10" font-weight="400" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="end">Tiêu đề chính</text>
+<rect x="1400" y="1318" width="580" height="26" rx="4" fill="#ffffff" stroke="#e6eff5"/>
+<text x="1412" y="1336" font-size="11" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Heading 2 — Semi Bold 22px</text>
+<text x="1988" y="1336" font-size="10" font-weight="400" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="end">Tiêu đề section</text>
+<rect x="1400" y="1348" width="580" height="26" rx="4" fill="#ffffff" stroke="#e6eff5"/>
+<text x="1412" y="1366" font-size="11" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Heading 3 — Medium 18px</text>
+<text x="1988" y="1366" font-size="10" font-weight="400" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="end">Tiêu đề phụ</text>
+<rect x="1400" y="1378" width="580" height="26" rx="4" fill="#ffffff" stroke="#e6eff5"/>
+<text x="1412" y="1396" font-size="11" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Heading 4 — Semi Bold 20px</text>
+<text x="1988" y="1396" font-size="10" font-weight="400" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="end">Tiêu đề widget</text>
+<rect x="1400" y="1408" width="580" height="26" rx="4" fill="#ffffff" stroke="#e6eff5"/>
+<text x="1412" y="1426" font-size="11" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Body 1 — Regular 16px</text>
+<text x="1988" y="1426" font-size="10" font-weight="400" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="end">Nội dung chính</text>
+<rect x="1400" y="1438" width="580" height="26" rx="4" fill="#ffffff" stroke="#e6eff5"/>
+<text x="1412" y="1456" font-size="11" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Body 2 — Regular 15px</text>
+<text x="1988" y="1456" font-size="10" font-weight="400" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="end">Nội dung phụ</text>
+<rect x="1400" y="1468" width="580" height="26" rx="4" fill="#ffffff" stroke="#e6eff5"/>
+<text x="1412" y="1486" font-size="11" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Body small — Regular 13px</text>
+<text x="1988" y="1486" font-size="10" font-weight="400" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="end">Chú thích</text>
+<rect x="1400" y="1498" width="580" height="26" rx="4" fill="#ffffff" stroke="#e6eff5"/>
+<text x="1412" y="1516" font-size="11" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Button — Medium 18px</text>
+<text x="1988" y="1516" font-size="10" font-weight="400" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="end">Nút bấm chính</text>
+<rect x="1400" y="1528" width="580" height="26" rx="4" fill="#ffffff" stroke="#e6eff5"/>
+<text x="1412" y="1546" font-size="11" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Button 2 — Medium 15px</text>
+<text x="1988" y="1546" font-size="10" font-weight="400" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="end">Nút bấm phụ</text>
+<text x="1400" y="1602" font-size="13" font-weight="700" fill="#343c6a" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Effect</text>
+<rect x="1400" y="1608" width="580" height="30" rx="4" fill="#ffffff" stroke="#e6eff5"/>
+<text x="1412" y="1623" font-size="11" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Shadow 1 — Drop shadow (4,4) r=18, spread -2</text>
+<text x="1988" y="1623" font-size="10" font-weight="400" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="end">Bóng đổ widget</text>
+<text x="1400" y="1654" font-size="13" font-weight="700" fill="#343c6a" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Symbols / Icons</text>
+<rect x="1400" y="1660" width="580" height="30" rx="4" fill="#ffffff" stroke="#e6eff5"/>
+<text x="1412" y="1675" font-size="11" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">tablet (84×84) • mobile (84×84)</text>
+<text x="1988" y="1675" font-size="10" font-weight="400" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="end">Biểu tượng thiết bị</text>
+<line x1="600" y1="310" x2="600" y2="330" stroke="#2d60ff" stroke-width="1.5" stroke-dasharray="5,4"/>
+<line x1="600" y1="330" x2="40" y2="330" stroke="#2d60ff" stroke-width="1.5"/>
+<line x1="40" y1="330" x2="40" y2="1760" stroke="#2d60ff" stroke-width="1.5"/>
+<line x1="40" y1="1760" x2="760" y2="1760" stroke="#2d60ff" stroke-width="1.5"/>
+<line x1="760" y1="1760" x2="760" y2="1780" stroke="#2d60ff" stroke-width="1.5"/>
+<text x="60" y="1780" font-size="16" font-weight="700" fill="#343c6a" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">PHÂN RÃ CHI TIẾT — MAIN DASHBOARD (1440 × 1175)</text>
+<rect x="60" y="1798" width="1320" height="380" rx="8" fill="#f5f7fa" stroke="#e6eff5" stroke-width="1.5"/>
+<rect x="60" y="1798" width="250" height="380" rx="8" fill="#ffffff" stroke="#343c6a" stroke-width="1.5"/>
+<text x="185" y="1988" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="700" fill="#343c6a" font-family="Inter, Segoe UI, sans-serif">Sidebar Menu</text>
+<rect x="310" y="1798" width="1070" height="60" rx="8" fill="#ffffff" stroke="#2d60ff" stroke-width="1.5"/>
+<text x="845" y="1828" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="700" fill="#2d60ff" font-family="Inter, Segoe UI, sans-serif">Header</text>
+<rect x="310" y="1798" width="350" height="290" rx="8" fill="#ffffff" stroke="#16dbcc" stroke-width="1.5"/>
+<text x="485" y="1943" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#16dbcc" font-family="Inter, Segoe UI, sans-serif">My Cards (2 thẻ)</text>
+<rect x="680" y="1798" width="350" height="290" rx="8" fill="#ffffff" stroke="#2d60ff" stroke-width="1.5"/>
+<text x="855" y="1943" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#2d60ff" font-family="Inter, Segoe UI, sans-serif">Balance History (bar)</text>
+<rect x="1050" y="1798" width="330" height="290" rx="8" fill="#ffffff" stroke="#feaa09" stroke-width="1.5"/>
+<text x="1215" y="1943" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#feaa09" font-family="Inter, Segoe UI, sans-serif">Expense Stats (donut)</text>
+<rect x="310" y="1798" width="350" height="130" rx="8" fill="#ffffff" stroke="#ff82ac" stroke-width="1.5"/>
+<text x="485" y="1863" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#ff82ac" font-family="Inter, Segoe UI, sans-serif">Quick Transfer</text>
+<rect x="680" y="1798" width="350" height="130" rx="8" fill="#ffffff" stroke="#fe5c73" stroke-width="1.5"/>
+<text x="855" y="1863" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#fe5c73" font-family="Inter, Segoe UI, sans-serif">Weekly Activity (bar)</text>
+<rect x="1050" y="1798" width="330" height="130" rx="8" fill="#ffffff" stroke="#718ebf" stroke-width="1.5"/>
+<text x="1215" y="1863" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="600" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif">Recent Transactions</text>
+<rect x="60" y="2218" width="1320" height="40" rx="8" fill="#ffffff" stroke="#2d60ff" stroke-width="1.5"/>
+<text x="720" y="2238" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="700" fill="#2d60ff" font-family="Inter, Segoe UI, sans-serif">Main Dashboard 1440×1175</text>
+<line x1="720" y1="2258" x2="720" y2="2278" stroke="#2d60ff" stroke-width="1.5"/>
+<line x1="142.5" y1="2278" x2="142.5" y2="2286" stroke="#343c6a" stroke-width="1.5"/>
+<rect x="60" y="2218" width="165" height="40" rx="8" fill="#ffffff" stroke="#343c6a" stroke-width="1.5"/>
+<text x="142.5" y="2238" text-anchor="middle" dominant-baseline="central" font-size="10.5" font-weight="700" fill="#343c6a" font-family="Inter, Segoe UI, sans-serif">Sidebar Menu 250×1184</text>
+<text x="142.5" y="2339" font-size="9.5" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Logo + 9 menu + indicator</text>
+<rect x="68" y="2352" width="149" height="22" rx="4" fill="#f7f9fc" stroke="#343c6a" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="142.5" y="2367" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Dashboard (active)</text>
+<rect x="68" y="2380" width="149" height="22" rx="4" fill="#f7f9fc" stroke="#343c6a" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="142.5" y="2395" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Transactions / Accounts</text>
+<rect x="68" y="2408" width="149" height="22" rx="4" fill="#f7f9fc" stroke="#343c6a" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="142.5" y="2423" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Investments / Credit Cards</text>
+<rect x="68" y="2436" width="149" height="22" rx="4" fill="#f7f9fc" stroke="#343c6a" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="142.5" y="2451" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Loans / Services / Setting</text>
+<line x1="307.5" y1="2278" x2="307.5" y2="2286" stroke="#2d60ff" stroke-width="1.5"/>
+<rect x="225" y="2218" width="165" height="40" rx="8" fill="#ffffff" stroke="#2d60ff" stroke-width="1.5"/>
+<text x="307.5" y="2238" text-anchor="middle" dominant-baseline="central" font-size="10.5" font-weight="700" fill="#2d60ff" font-family="Inter, Segoe UI, sans-serif">Header 1440×101</text>
+<text x="307.5" y="2339" font-size="9.5" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Logo + Search + Bell + Avatar</text>
+<rect x="233" y="2352" width="149" height="22" rx="4" fill="#f7f9fc" stroke="#2d60ff" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="307.5" y="2367" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Logo BankDash. (36×36)</text>
+<rect x="233" y="2380" width="149" height="22" rx="4" fill="#f7f9fc" stroke="#2d60ff" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="307.5" y="2395" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Search 255×50</text>
+<rect x="233" y="2408" width="149" height="22" rx="4" fill="#f7f9fc" stroke="#2d60ff" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="307.5" y="2423" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Notifications + user</text>
+<line x1="472.5" y1="2278" x2="472.5" y2="2286" stroke="#16dbcc" stroke-width="1.5"/>
+<rect x="390" y="2218" width="165" height="40" rx="8" fill="#ffffff" stroke="#16dbcc" stroke-width="1.5"/>
+<text x="472.5" y="2238" text-anchor="middle" dominant-baseline="central" font-size="10.5" font-weight="700" fill="#16dbcc" font-family="Inter, Segoe UI, sans-serif">My Cards 730×282</text>
+<text x="472.5" y="2339" font-size="9.5" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">2 thẻ ngân hàng</text>
+<rect x="398" y="2352" width="149" height="22" rx="4" fill="#f7f9fc" stroke="#16dbcc" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="472.5" y="2367" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Card 1 dark #1814f3</text>
+<rect x="398" y="2380" width="149" height="22" rx="4" fill="#f7f9fc" stroke="#16dbcc" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="472.5" y="2395" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Card 2 gradient + Chip</text>
+<rect x="398" y="2408" width="149" height="22" rx="4" fill="#f7f9fc" stroke="#16dbcc" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="472.5" y="2423" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Balance + số thẻ + See All</text>
+<line x1="637.5" y1="2278" x2="637.5" y2="2286" stroke="#2d60ff" stroke-width="1.5"/>
+<rect x="555" y="2218" width="165" height="40" rx="8" fill="#ffffff" stroke="#2d60ff" stroke-width="1.5"/>
+<text x="637.5" y="2238" text-anchor="middle" dominant-baseline="central" font-size="10.5" font-weight="700" fill="#2d60ff" font-family="Inter, Segoe UI, sans-serif">Balance History 635×323</text>
+<text x="637.5" y="2339" font-size="9.5" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Bar chart 7 ngày</text>
+<rect x="563" y="2352" width="149" height="22" rx="4" fill="#f7f9fc" stroke="#2d60ff" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="637.5" y="2367" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Title</text>
+<rect x="563" y="2380" width="149" height="22" rx="4" fill="#f7f9fc" stroke="#2d60ff" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="637.5" y="2395" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Trục + giá trị</text>
+<rect x="563" y="2408" width="149" height="22" rx="4" fill="#f7f9fc" stroke="#2d60ff" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="637.5" y="2423" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Cột dữ liệu</text>
+<line x1="802.5" y1="2278" x2="802.5" y2="2286" stroke="#fe5c73" stroke-width="1.5"/>
+<rect x="720" y="2218" width="165" height="40" rx="8" fill="#ffffff" stroke="#fe5c73" stroke-width="1.5"/>
+<text x="802.5" y="2238" text-anchor="middle" dominant-baseline="central" font-size="10.5" font-weight="700" fill="#fe5c73" font-family="Inter, Segoe UI, sans-serif">Weekly Activity 730×367</text>
+<text x="802.5" y="2339" font-size="9.5" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Bar nhóm Deposit</text>
+<rect x="728" y="2352" width="149" height="22" rx="4" fill="#f7f9fc" stroke="#fe5c73" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="802.5" y="2367" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Title + legend</text>
+<rect x="728" y="2380" width="149" height="22" rx="4" fill="#f7f9fc" stroke="#fe5c73" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="802.5" y="2395" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Nhóm cột 2 series</text>
+<rect x="728" y="2408" width="149" height="22" rx="4" fill="#f7f9fc" stroke="#fe5c73" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="802.5" y="2423" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Nhãn trục</text>
+<line x1="967.5" y1="2278" x2="967.5" y2="2286" stroke="#feaa09" stroke-width="1.5"/>
+<rect x="885" y="2218" width="165" height="40" rx="8" fill="#ffffff" stroke="#feaa09" stroke-width="1.5"/>
+<text x="967.5" y="2238" text-anchor="middle" dominant-baseline="central" font-size="10.5" font-weight="700" fill="#feaa09" font-family="Inter, Segoe UI, sans-serif">Expense Stats 350×367</text>
+<text x="967.5" y="2339" font-size="9.5" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Donut 35/30/20/15%</text>
+<rect x="893" y="2352" width="149" height="22" rx="4" fill="#f7f9fc" stroke="#feaa09" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="967.5" y="2367" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Ring VECTOR 4 phần</text>
+<rect x="893" y="2380" width="149" height="22" rx="4" fill="#f7f9fc" stroke="#feaa09" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="967.5" y="2395" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Legend 4 nhóm</text>
+<rect x="893" y="2408" width="149" height="22" rx="4" fill="#f7f9fc" stroke="#feaa09" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="967.5" y="2423" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Nền Rectangle</text>
+<line x1="1132.5" y1="2278" x2="1132.5" y2="2286" stroke="#ff82ac" stroke-width="1.5"/>
+<rect x="1050" y="2218" width="165" height="40" rx="8" fill="#ffffff" stroke="#ff82ac" stroke-width="1.5"/>
+<text x="1132.5" y="2238" text-anchor="middle" dominant-baseline="central" font-size="10.5" font-weight="700" fill="#ff82ac" font-family="Inter, Segoe UI, sans-serif">Quick Transfer 445×323</text>
+<text x="1132.5" y="2339" font-size="9.5" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Contact + nhập tiền</text>
+<rect x="1058" y="2352" width="149" height="22" rx="4" fill="#f7f9fc" stroke="#ff82ac" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="1132.5" y="2367" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">4 avatar contact</text>
+<rect x="1058" y="2380" width="149" height="22" rx="4" fill="#f7f9fc" stroke="#ff82ac" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="1132.5" y="2395" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Write Amount</text>
+<rect x="1058" y="2408" width="149" height="22" rx="4" fill="#f7f9fc" stroke="#ff82ac" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="1132.5" y="2423" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Nút Send</text>
+<line x1="1297.5" y1="2278" x2="1297.5" y2="2286" stroke="#718ebf" stroke-width="1.5"/>
+<rect x="1215" y="2218" width="165" height="40" rx="8" fill="#ffffff" stroke="#718ebf" stroke-width="1.5"/>
+<text x="1297.5" y="2238" text-anchor="middle" dominant-baseline="central" font-size="10.5" font-weight="700" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif">Recent Transaction 350×282</text>
+<text x="1297.5" y="2339" font-size="9.5" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">3 dòng giao dịch</text>
+<rect x="1223" y="2352" width="149" height="22" rx="4" fill="#f7f9fc" stroke="#718ebf" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="1297.5" y="2367" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Group 316/317/318</text>
+<rect x="1223" y="2380" width="149" height="22" rx="4" fill="#f7f9fc" stroke="#718ebf" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="1297.5" y="2395" font-size="9" font-weight="600" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="middle">Icon + tên + giá trị</text>
+<text x="60" y="2530" font-size="16" font-weight="700" fill="#343c6a" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">LEGEND — Thống kê loại node trong file</text>
+<rect x="60" y="2548" width="150" height="46" rx="6" fill="#ffffff" stroke="#343c6a" stroke-width="1.5"/>
+<rect x="70" y="2558" width="14" height="14" rx="3" fill="#343c6a"/>
+<text x="90" y="2565" font-size="10" font-weight="700" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">DOCUMENT</text>
+<text x="90" y="2582" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">1 node</text>
+<rect x="220" y="2548" width="150" height="46" rx="6" fill="#ffffff" stroke="#16dbcc" stroke-width="1.5"/>
+<rect x="230" y="2558" width="14" height="14" rx="3" fill="#16dbcc"/>
+<text x="250" y="2565" font-size="10" font-weight="700" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">CANVAS</text>
+<text x="250" y="2582" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">2 node</text>
+<rect x="380" y="2548" width="150" height="46" rx="6" fill="#ffffff" stroke="#2d60ff" stroke-width="1.5"/>
+<rect x="390" y="2558" width="14" height="14" rx="3" fill="#2d60ff"/>
+<text x="410" y="2565" font-size="10" font-weight="700" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">FRAME</text>
+<text x="410" y="2582" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">2655 node</text>
+<rect x="540" y="2548" width="150" height="46" rx="6" fill="#ffffff" stroke="#feaa09" stroke-width="1.5"/>
+<rect x="550" y="2558" width="14" height="14" rx="3" fill="#feaa09"/>
+<text x="570" y="2565" font-size="10" font-weight="700" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">ROUNDED_RECTANGLE</text>
+<text x="570" y="2582" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">845 node</text>
+<rect x="700" y="2548" width="150" height="46" rx="6" fill="#ffffff" stroke="#fe5c73" stroke-width="1.5"/>
+<rect x="710" y="2558" width="14" height="14" rx="3" fill="#fe5c73"/>
+<text x="730" y="2565" font-size="10" font-weight="700" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">TEXT</text>
+<text x="730" y="2582" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">1757 node</text>
+<rect x="860" y="2548" width="150" height="46" rx="6" fill="#ffffff" stroke="#ff82ac" stroke-width="1.5"/>
+<rect x="870" y="2558" width="14" height="14" rx="3" fill="#ff82ac"/>
+<text x="890" y="2565" font-size="10" font-weight="700" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">VECTOR</text>
+<text x="890" y="2582" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">1305 node</text>
+<rect x="1020" y="2548" width="150" height="46" rx="6" fill="#ffffff" stroke="#5ac8fa" stroke-width="1.5"/>
+<rect x="1030" y="2558" width="14" height="14" rx="3" fill="#5ac8fa"/>
+<text x="1050" y="2565" font-size="10" font-weight="700" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">ELLIPSE</text>
+<text x="1050" y="2582" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">235 node</text>
+<rect x="1180" y="2548" width="150" height="46" rx="6" fill="#ffffff" stroke="#718ebf" stroke-width="1.5"/>
+<rect x="1190" y="2558" width="14" height="14" rx="3" fill="#718ebf"/>
+<text x="1210" y="2565" font-size="10" font-weight="700" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">SYMBOL</text>
+<text x="1210" y="2582" font-size="10" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">2 node</text>
+<text x="60" y="2628" font-size="16" font-weight="700" fill="#343c6a" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">BẢNG MÀU CHỦ ĐẠO (màu được dùng nhiều nhất trong file)</text>
+<rect x="60" y="2646" width="105" height="46" rx="6" fill="#ffffff" stroke="#e6eff5"/>
+<rect x="68" y="2654" width="18" height="18" rx="3" fill="#2d60ff" stroke="#bbb"/>
+<text x="92" y="2662" font-size="9" font-weight="700" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">#2d60ff</text>
+<text x="92" y="2679" font-size="9" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Primary blue</text>
+<rect x="175" y="2646" width="105" height="46" rx="6" fill="#ffffff" stroke="#e6eff5"/>
+<rect x="183" y="2654" width="18" height="18" rx="3" fill="#1814f3" stroke="#bbb"/>
+<text x="207" y="2662" font-size="9" font-weight="700" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">#1814f3</text>
+<text x="207" y="2679" font-size="9" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Card dark blue</text>
+<rect x="290" y="2646" width="105" height="46" rx="6" fill="#ffffff" stroke="#e6eff5"/>
+<rect x="298" y="2654" width="18" height="18" rx="3" fill="#16dbcc" stroke="#bbb"/>
+<text x="322" y="2662" font-size="9" font-weight="700" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">#16dbcc</text>
+<text x="322" y="2679" font-size="9" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Teal accent</text>
+<rect x="405" y="2646" width="105" height="46" rx="6" fill="#ffffff" stroke="#e6eff5"/>
+<rect x="413" y="2654" width="18" height="18" rx="3" fill="#fe5c73" stroke="#bbb"/>
+<text x="437" y="2662" font-size="9" font-weight="700" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">#fe5c73</text>
+<text x="437" y="2679" font-size="9" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Secondary coral</text>
+<rect x="520" y="2646" width="105" height="46" rx="6" fill="#ffffff" stroke="#e6eff5"/>
+<rect x="528" y="2654" width="18" height="18" rx="3" fill="#ff82ac" stroke="#bbb"/>
+<text x="552" y="2662" font-size="9" font-weight="700" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">#ff82ac</text>
+<text x="552" y="2679" font-size="9" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Pink accent</text>
+<rect x="635" y="2646" width="105" height="46" rx="6" fill="#ffffff" stroke="#e6eff5"/>
+<rect x="643" y="2654" width="18" height="18" rx="3" fill="#feaa09" stroke="#bbb"/>
+<text x="667" y="2662" font-size="9" font-weight="700" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">#feaa09</text>
+<text x="667" y="2679" font-size="9" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Amber/warning</text>
+<rect x="750" y="2646" width="105" height="46" rx="6" fill="#ffffff" stroke="#e6eff5"/>
+<rect x="758" y="2654" width="18" height="18" rx="3" fill="#343c6a" stroke="#bbb"/>
+<text x="782" y="2662" font-size="9" font-weight="700" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">#343c6a</text>
+<text x="782" y="2679" font-size="9" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Navy text</text>
+<rect x="865" y="2646" width="105" height="46" rx="6" fill="#ffffff" stroke="#e6eff5"/>
+<rect x="873" y="2654" width="18" height="18" rx="3" fill="#718ebf" stroke="#bbb"/>
+<text x="897" y="2662" font-size="9" font-weight="700" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">#718ebf</text>
+<text x="897" y="2679" font-size="9" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Slate text</text>
+<rect x="980" y="2646" width="105" height="46" rx="6" fill="#ffffff" stroke="#e6eff5"/>
+<rect x="988" y="2654" width="18" height="18" rx="3" fill="#b1b1b1" stroke="#bbb"/>
+<text x="1012" y="2662" font-size="9" font-weight="700" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">#b1b1b1</text>
+<text x="1012" y="2679" font-size="9" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Icon grey</text>
+<rect x="1095" y="2646" width="105" height="46" rx="6" fill="#ffffff" stroke="#e6eff5"/>
+<rect x="1103" y="2654" width="18" height="18" rx="3" fill="#e6eff5" stroke="#bbb"/>
+<text x="1127" y="2662" font-size="9" font-weight="700" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">#e6eff5</text>
+<text x="1127" y="2679" font-size="9" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Border light</text>
+<rect x="1210" y="2646" width="105" height="46" rx="6" fill="#ffffff" stroke="#e6eff5"/>
+<rect x="1218" y="2654" width="18" height="18" rx="3" fill="#f5f7fa" stroke="#bbb"/>
+<text x="1242" y="2662" font-size="9" font-weight="700" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">#f5f7fa</text>
+<text x="1242" y="2679" font-size="9" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Page bg</text>
+<rect x="1325" y="2646" width="105" height="46" rx="6" fill="#ffffff" stroke="#e6eff5"/>
+<rect x="1333" y="2654" width="18" height="18" rx="3" fill="#ffffff" stroke="#bbb"/>
+<text x="1357" y="2662" font-size="9" font-weight="700" fill="#232323" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">#ffffff</text>
+<text x="1357" y="2679" font-size="9" font-weight="500" fill="#718ebf" font-family="Inter, Segoe UI, sans-serif" text-anchor="start">Card bg</text>
+<rect x="0" y="2736" width="2100" height="50" fill="#343c6a"/>
+<text x="1050" y="2768" text-anchor="middle" font-size="13" fill="#b9c4e0" font-family="Inter, Segoe UI, sans-serif">Được tái dựng (redraw) từ phân tích cấu trúc nhị phân canvas.fig — kiwi v106 — openfig-core parser</text>
+</svg>
+</div>
+</body>
+</html>
