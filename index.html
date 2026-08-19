@@ -961,28 +961,66 @@
     const PALLET_MODEL_MINY = -0.501; // mặt đáy model (mét)
     const PALLET_STD_W = 1100, PALLET_STD_L = 1100; // qui cách chuẩn pallet (mm)
     let palletModelCache = null, palletModelFailed = false, palletModelLoading = false;
+    const palletModelWaiters = [];
 
     function loadPalletModel(cb) {
         if (palletModelCache) return cb(palletModelCache);
         if (palletModelFailed) return cb(null);
-        if (palletModelLoading) return;
+        if (palletModelLoading) { palletModelWaiters.push(cb); return; }
         palletModelLoading = true;
         try {
             const loader = new THREE.GLTFLoader();
             loader.load('Pallet/scene.gltf', (gltf) => {
                 palletModelCache = gltf.scene;
                 cb(palletModelCache);
+                palletModelWaiters.splice(0).forEach(f => f(palletModelCache));
             }, undefined, () => {
                 palletModelFailed = true;
+                showToast('Không tải được model pallet 3D — đã dùng pallet gỗ mặc định!', 'warning');
                 cb(null);
+                palletModelWaiters.splice(0).forEach(f => f(null));
             });
-        } catch (e) { palletModelFailed = true; cb(null); }
+        } catch (e) {
+            palletModelFailed = true;
+            showToast('Không tải được model pallet 3D — đã dùng pallet gỗ mặc định!', 'warning');
+            cb(null);
+            palletModelWaiters.splice(0).forEach(f => f(null));
+        }
+    }
+
+    // Pallet gỗ mặc định (procedural) — dùng khi glTF không tải được (VD: mở file:// trực tiếp)
+    function createProceduralPallet(w, d, h) {
+        const g = new THREE.Group();
+        const wood = new THREE.MeshStandardMaterial({ color: 0x9a6b3f });
+        const woodDark = new THREE.MeshStandardMaterial({ color: 0x7d542e });
+        const sTh = 0.09, sH = h * 0.8;
+        [-0.34 * w, 0, 0.34 * w].forEach(x => {
+            const m = new THREE.Mesh(new THREE.BoxGeometry(sTh, sH, d), woodDark);
+            m.position.set(x, sH / 2, 0);
+            g.add(m);
+        });
+        const bTh = 0.02;
+        [-0.34 * d, 0, 0.34 * d].forEach(z => {
+            const m = new THREE.Mesh(new THREE.BoxGeometry(w, bTh, 0.1), wood);
+            m.position.set(0, bTh / 2, z);
+            g.add(m);
+        });
+        const tTh = Math.max(0.01, h - sH);
+        [-0.4 * d, -0.2 * d, 0, 0.2 * d, 0.4 * d].forEach(z => {
+            const m = new THREE.Mesh(new THREE.BoxGeometry(w, tTh, 0.16), wood);
+            m.position.set(0, sH + tTh / 2, z);
+            g.add(m);
+        });
+        return g;
     }
 
     // Tạo group pallet bằng model 3D thật, footprint w x d (mét), đáy nằm tại y = 0
     function makePalletMesh(w, d, cb) {
         loadPalletModel((src) => {
-            if (!src) return cb(null);
+            if (!src) {
+                const s = Math.min(w, d) / PALLET_MODEL_UNIT;
+                return cb(createProceduralPallet(w, d, PALLET_MODEL_TOP * s));
+            }
             try {
                 const g = src.clone(true);
                 const s = Math.min(w, d) / PALLET_MODEL_UNIT;
@@ -990,7 +1028,7 @@
                 g.position.y = -PALLET_MODEL_MINY * s;
                 g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
                 cb(g);
-            } catch (e) { cb(null); }
+            } catch (e) { cb(createProceduralPallet(w, d, PALLET_MODEL_TOP * (Math.min(w, d) / PALLET_MODEL_UNIT))); }
         });
     }
 
@@ -1070,8 +1108,15 @@
             let pBaseMesh = new THREE.Mesh(new THREE.BoxGeometry(slotW - 0.02, 0.1, slotL - 0.02), new THREE.MeshStandardMaterial({ color: 0x8b5a2b }));
             pBaseMesh.position.set(0, 0.05, 0);
             visualGroup.add(pBaseMesh);
+            let cargoMeshes = [];
             makePalletMesh(slotW, slotL, (pg) => {
-                if (pg) { visualGroup.remove(pBaseMesh); visualGroup.add(pg); }
+                if (pg) {
+                    visualGroup.remove(pBaseMesh);
+                    visualGroup.add(pg);
+                    const palletTop = PALLET_MODEL_TOP * (Math.min(slotW, slotL) / PALLET_MODEL_UNIT);
+                    const dy = palletTop - 0.1;
+                    if (dy > 0.001) cargoMeshes.forEach(m => { if (m.position) m.position.y += dy; });
+                }
             });
 
             let materials = createBoxTextures(pallet.code, pallet.dimStr, colorMap[pallet.code] || '#e67e22');
@@ -1084,6 +1129,7 @@
                 boxMesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(boxMesh.geometry), new THREE.LineBasicMaterial({color: 0x0})));
                 boxMesh.position.set(0, 0.1 + (bY/2), 0);
                 visualGroup.add(boxMesh);
+                cargoMeshes.push(boxMesh);
             } else if (pallet.customLayout) {
                 let sW = pallet.dims.w / 1000, sL = pallet.dims.l / 1000, sH = pallet.dims.h / 1000;
                 const sGeo = new THREE.BoxGeometry(sW-0.01, sH-0.01, sL-0.01);
@@ -1245,12 +1291,7 @@
 
         pbPalletGroup = new THREE.Group(); pbScene.add(pbPalletGroup);
         makePalletMesh(PAL, PAL, (pg) => {
-            if (pg) {
-                pbPalletGroup.add(pg);
-            } else {
-                const fb = new THREE.Mesh(new THREE.BoxGeometry(PAL - 0.02, 0.237, PAL - 0.02), new THREE.MeshStandardMaterial({ color: 0x8b5a2b }));
-                fb.position.y = 0.1185; pbPalletGroup.add(fb);
-            }
+            if (pg) pbPalletGroup.add(pg);
             if (pbControls) pbControls.update();
         });
 
