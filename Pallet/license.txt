@@ -1,0 +1,11 @@
+Model Information:
+* title:	Realistic Wooden Pallet (Low-Poly)
+* source:	https://sketchfab.com/3d-models/realistic-wooden-pallet-low-poly-83723a87b7d44bd296a3d7a750b2e781
+* author:	plank_de (https://sketchfab.com/plank199)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Realistic Wooden Pallet (Low-Poly)" (https://sketchfab.com/3d-models/realistic-wooden-pallet-low-poly-83723a87b7d44bd296a3d7a750b2e781) by plank_de (https://sketchfab.com/plank199) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

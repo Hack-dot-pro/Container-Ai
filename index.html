@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
@@ -583,6 +584,7 @@
                     <b id="pb_code" style="font-size:18px; color:var(--dark);"></b>
                     <p style="margin:5px 0 0 0; font-size:13px;" id="pb_dimStr"></p>
                     <p style="margin:5px 0 0 0; font-size:13px; color:var(--danger); font-weight:700;" id="pb_packStr"></p>
+                    <p style="margin:5px 0 0 0; font-size:12px; color:var(--primary); font-weight:700;">Qui cách chuẩn pallet: 1100 × 1100 mm</p>
                 </div>
                 <div class="form-group">
                     <label>Số PCS (Sản phẩm) muốn xếp lên 1 Pallet:</label>
@@ -599,7 +601,7 @@
             <div class="b-col-center" id="palletBuilder-container"></div>
             <div class="b-col-right">
                 <div class="info-box teal-box">
-                    <span>Tóm Tắt Pallet</span>
+                    <span>Tóm Tắt Pallet (1100 × 1100mm)</span>
                     <p>Số thùng: <b id="pb_boxCount">0 Thùng</b></p>
                     <p>Tổng Trọng lượng: <b id="pb_weight" style="color:var(--danger);">0.00 Kg</b></p>
                 </div>
@@ -625,7 +627,10 @@
         c.appendChild(t); setTimeout(() => { t.style.opacity = 0; setTimeout(() => t.remove(), 300); }, 3500);
     }
     function executeClearData() { if(confirm("Xóa toàn bộ dữ liệu?")) { localStorage.clear(); location.reload(); } }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function closeModal(id) {
+        document.getElementById(id).style.display = 'none';
+        if (id === 'modalBuilder' && pbAnimationId) { cancelAnimationFrame(pbAnimationId); pbAnimationId = null; }
+    }
 
     let masterData = JSON.parse(localStorage.getItem('cp11_master')) || [];
     let queueData = JSON.parse(localStorage.getItem('cp11_queue')) || [];
@@ -950,6 +955,45 @@
     const startZ = -(cL / 2) + (slotL / 2);
     const startX = -(cW / 2) + (slotW / 2) + 0.03;
 
+    // --- PALLET 3D MODEL (glTF: Pallet/scene.gltf — Realistic Wooden Pallet 5.0m x 5.0m) ---
+    const PALLET_MODEL_UNIT = 5.0;   // bbox gốc model (mét)
+    const PALLET_MODEL_TOP = 1.077;  // chiều cao model (mét)
+    const PALLET_MODEL_MINY = -0.501; // mặt đáy model (mét)
+    const PALLET_STD_W = 1100, PALLET_STD_L = 1100; // qui cách chuẩn pallet (mm)
+    let palletModelCache = null, palletModelFailed = false, palletModelLoading = false;
+
+    function loadPalletModel(cb) {
+        if (palletModelCache) return cb(palletModelCache);
+        if (palletModelFailed) return cb(null);
+        if (palletModelLoading) return;
+        palletModelLoading = true;
+        try {
+            const loader = new THREE.GLTFLoader();
+            loader.load('Pallet/scene.gltf', (gltf) => {
+                palletModelCache = gltf.scene;
+                cb(palletModelCache);
+            }, undefined, () => {
+                palletModelFailed = true;
+                cb(null);
+            });
+        } catch (e) { palletModelFailed = true; cb(null); }
+    }
+
+    // Tạo group pallet bằng model 3D thật, footprint w x d (mét), đáy nằm tại y = 0
+    function makePalletMesh(w, d, cb) {
+        loadPalletModel((src) => {
+            if (!src) return cb(null);
+            try {
+                const g = src.clone(true);
+                const s = Math.min(w, d) / PALLET_MODEL_UNIT;
+                g.scale.set(s, s, s);
+                g.position.y = -PALLET_MODEL_MINY * s;
+                g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+                cb(g);
+            } catch (e) { cb(null); }
+        });
+    }
+
     function createBoxTextures(code, dimStr, bgColorHex) {
         const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 512;
         const ctx = canvas.getContext('2d');
@@ -1026,6 +1070,9 @@
             let pBaseMesh = new THREE.Mesh(new THREE.BoxGeometry(slotW - 0.02, 0.1, slotL - 0.02), new THREE.MeshStandardMaterial({ color: 0x8b5a2b }));
             pBaseMesh.position.set(0, 0.05, 0);
             visualGroup.add(pBaseMesh);
+            makePalletMesh(slotW, slotL, (pg) => {
+                if (pg) { visualGroup.remove(pBaseMesh); visualGroup.add(pg); }
+            });
 
             let materials = createBoxTextures(pallet.code, pallet.dimStr, colorMap[pallet.code] || '#e67e22');
 
@@ -1065,8 +1112,7 @@
                 controls.enabled = false;
                 draggedBox = intersects[0].object;
                 draggedBox.position.y += 0.2;
-                draggedBox.children[0].children.forEach(c => c.material.transparent = true);
-                draggedBox.children[0].children.forEach(c => c.material.opacity = 0.8);
+                draggedBox.children[0].children.forEach(c => { if (c.material) { c.material.transparent = true; c.material.opacity = 0.8; } });
 
                 ghostMesh.visible = true;
                 ghostMesh.position.copy(draggedBox.position);
@@ -1118,8 +1164,7 @@
             controls.enabled = true;
             ghostMesh.visible = false;
 
-            draggedBox.children[0].children.forEach(c => c.material.transparent = false);
-            draggedBox.children[0].children.forEach(c => c.material.opacity = 1.0);
+            draggedBox.children[0].children.forEach(c => { if (c.material) { c.material.transparent = false; c.material.opacity = 1.0; } });
 
             let targetC = Math.round((ghostMesh.position.x - startX) / slotW);
             let targetR = Math.round((ghostMesh.position.z - startZ) / slotL);
@@ -1156,6 +1201,10 @@
     }
 
     // --- Builder Mini (dùng chung biến 3D) ---
+    let pbScene = null, pbCamera = null, pbRenderer = null, pbControls = null, pbAnimationId = null;
+    let pbHitBoxes = [], pbBoxes = [], pbGhost = null, pbDragged = null, pbDragPlane = new THREE.Plane();
+    let pbPalletGroup = null;
+
     function openPalletBuilder() {
         if(!selectedItem) return showToast("Chọn mã hàng trước!", "warning");
         document.getElementById('pb_code').innerText = selectedItem.code;
@@ -1163,14 +1212,204 @@
         document.getElementById('pb_packStr').innerText = `Quy cách: ${selectedItem.packQty} PCS / Thùng con`;
         document.getElementById('pb_boxCount').innerText = '0 Thùng';
         document.getElementById('pb_weight').innerText = '0.00 Kg';
+        document.getElementById('pb_pcs').value = '';
         document.getElementById('pb_targetPallets').value = '';
         document.getElementById('modalBuilder').style.display = 'flex';
         initPalletBuilder3D();
     }
-    function initPalletBuilder3D() { /* Logic Builder tương tự, đã tích hợp trong mã trên */ }
-    function calcBuilderBoxes() {}
-    function generatePalletBoxes() {}
-    function savePalletToQueue() {}
+
+    function initPalletBuilder3D() {
+        const wrap = document.getElementById('palletBuilder-container');
+        if (pbAnimationId) cancelAnimationFrame(pbAnimationId);
+        while (wrap.firstChild) wrap.removeChild(wrap.firstChild);
+
+        const w = wrap.clientWidth || 480, h = wrap.clientHeight || 420;
+        const PAL = PALLET_STD_W / 1000; // 1.1 m — qui cách chuẩn pallet 1100x1100mm
+
+        pbScene = new THREE.Scene(); pbScene.background = new THREE.Color(0x1a252f);
+        pbCamera = new THREE.PerspectiveCamera(45, w / h, 0.1, 1000);
+        pbCamera.position.set(2.6, 2.4, 2.9);
+        pbRenderer = new THREE.WebGLRenderer({ antialias: true }); pbRenderer.setSize(w, h);
+        wrap.appendChild(pbRenderer.domElement);
+
+        pbControls = new THREE.OrbitControls(pbCamera, pbRenderer.domElement);
+        pbControls.enableDamping = true; pbControls.target.set(0, 0.4, 0); pbControls.maxPolarAngle = Math.PI / 2.1;
+
+        pbScene.add(new THREE.AmbientLight(0xffffff, 0.9));
+        const dl = new THREE.DirectionalLight(0xffffff, 0.6); dl.position.set(5, 10, 7); pbScene.add(dl);
+        const dl2 = new THREE.DirectionalLight(0xffffff, 0.3); dl2.position.set(-4, 6, -5); pbScene.add(dl2);
+
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(3, 3), new THREE.MeshStandardMaterial({ color: 0x22303c }));
+        floor.rotation.x = -Math.PI / 2; pbScene.add(floor);
+        pbScene.add(new THREE.GridHelper(3, 30, 0x4a5a6a, 0x39485a));
+
+        pbPalletGroup = new THREE.Group(); pbScene.add(pbPalletGroup);
+        makePalletMesh(PAL, PAL, (pg) => {
+            if (pg) {
+                pbPalletGroup.add(pg);
+            } else {
+                const fb = new THREE.Mesh(new THREE.BoxGeometry(PAL - 0.02, 0.237, PAL - 0.02), new THREE.MeshStandardMaterial({ color: 0x8b5a2b }));
+                fb.position.y = 0.1185; pbPalletGroup.add(fb);
+            }
+            if (pbControls) pbControls.update();
+        });
+
+        pbHitBoxes = []; pbBoxes = []; pbDragged = null;
+        pbGhost = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.5, visible: false, depthWrite: false }));
+        pbScene.add(pbGhost);
+
+        wrap.addEventListener('mousedown', (e) => {
+            if (!isCtrlPressed) return;
+            const rect = wrap.getBoundingClientRect();
+            const mx = ((e.clientX - rect.left) / w) * 2 - 1;
+            const my = -((e.clientY - rect.top) / h) * 2 + 1;
+            raycaster.setFromCamera(new THREE.Vector2(mx, my), pbCamera);
+            const hits = raycaster.intersectObjects(pbHitBoxes);
+            if (hits.length > 0) {
+                pbControls.enabled = false;
+                pbDragged = hits[0].object;
+                pbDragged.position.y += 0.15;
+                pbDragged.children[0].children.forEach(c => { if (c.material) { c.material.transparent = true; c.material.opacity = 0.8; } });
+                const m = pbDragged.userData;
+                pbGhost.geometry = new THREE.BoxGeometry(m.hw * 2, m.hh * 2, m.hd * 2);
+                pbGhost.position.set(pbDragged.position.x, m.origY, pbDragged.position.z);
+                pbGhost.visible = true;
+                pbDragPlane.setFromNormalAndCoplanarPoint(new THREE.Vector3(0, 1, 0), pbDragged.position);
+            }
+        });
+
+        wrap.addEventListener('mousemove', (e) => {
+            if (!pbDragged) return;
+            const rect = wrap.getBoundingClientRect();
+            const mx = ((e.clientX - rect.left) / w) * 2 - 1;
+            const my = -((e.clientY - rect.top) / h) * 2 + 1;
+            raycaster.setFromCamera(new THREE.Vector2(mx, my), pbCamera);
+            const ip = new THREE.Vector3();
+            raycaster.ray.intersectPlane(pbDragPlane, ip);
+            if (ip) {
+                const m = pbDragged.userData;
+                const lim = PAL / 2 - Math.max(m.hw, m.hd) * 1.1;
+                ip.x = Math.max(-lim, Math.min(lim, ip.x));
+                ip.z = Math.max(-lim, Math.min(lim, ip.z));
+                pbDragged.position.x = ip.x; pbDragged.position.z = ip.z;
+                pbGhost.position.x = ip.x; pbGhost.position.z = ip.z;
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (!pbDragged) return;
+            pbControls.enabled = true;
+            pbGhost.visible = false;
+            pbDragged.children[0].children.forEach(c => { if (c.material) { c.material.transparent = false; c.material.opacity = 1.0; } });
+            pbDragged = null;
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if ((e.key === 'r' || e.key === 'R') && isCtrlPressed && pbDragged) {
+                pbDragged.children[0].rotation.y += Math.PI / 2;
+            }
+        });
+
+        function animate() { pbAnimationId = requestAnimationFrame(animate); pbControls.update(); pbRenderer.render(pbScene, pbCamera); }
+        animate();
+    }
+
+    // Xếp thùng con lên pallet chuẩn 1100x1100mm — greedy theo lớp, tối ưu chiều cao
+    function layoutBuilderBoxes(boxCount, dims) {
+        const PAL = PALLET_STD_W / 1000;
+        const bL = dims.l / 1000, bW = dims.w / 1000, bH = dims.h / 1000;
+        const M = 0.02, MAX_H_LAYER = 0.85;
+        let best = null;
+        [{x: bW, z: bL, ry: 0}, {x: bL, z: bW, ry: Math.PI / 2}].forEach(or => {
+            const cols = Math.max(1, Math.floor((PAL - M * 2) / or.x));
+            const rows = Math.max(1, Math.floor((PAL - M * 2) / or.z));
+            const perLayer = cols * rows;
+            if (perLayer === 0) return;
+            let remaining = boxCount, layers = 0, layerBoxes = [];
+            while (remaining > 0 && layers < 10) {
+                const n = Math.min(perLayer, remaining);
+                const layer = [];
+                for (let i = 0; i < n; i++) {
+                    const c = i % cols, r = Math.floor(i / cols);
+                    layer.push({
+                        x: -PAL / 2 + M + or.x / 2 + c * or.x,
+                        z: -PAL / 2 + M + or.z / 2 + r * or.z,
+                        w: or.x, d: or.z, ry: or.ry
+                    });
+                }
+                layerBoxes.push(layer);
+                remaining -= n; layers++;
+            }
+            const totalH = layers * bH;
+            if (remaining === 0 && totalH <= MAX_H_LAYER && (!best || totalH < best.totalH)) {
+                best = { layerBoxes, totalH, bH };
+            }
+        });
+        return best;
+    }
+
+    function clearBuilderBoxes() {
+        pbHitBoxes.forEach(h => pbScene.remove(h));
+        pbHitBoxes = []; pbBoxes = [];
+        if (pbGhost) { pbGhost.geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1); pbGhost.visible = false; }
+    }
+
+    function calcBuilderBoxes() {
+        if (!selectedItem || !pbScene) return;
+        clearBuilderBoxes();
+        const pcs = parseInt(document.getElementById('pb_pcs').value) || 0;
+        if (pcs <= 0) { document.getElementById('pb_boxCount').innerText = '0 Thùng'; document.getElementById('pb_weight').innerText = '0.00 Kg'; return; }
+        const packQty = selectedItem.packQty || 1;
+        const boxCount = Math.ceil(pcs / packQty);
+        const plan = layoutBuilderBoxes(boxCount, selectedItem.dims);
+        if (!plan) {
+            const cap = capacityHint(selectedItem.dims);
+            return showToast(`Không đủ chỗ trên pallet 1100×1100! Giảm số PCS (tối đa ~${cap * Math.max(1, Math.floor(0.85 / (selectedItem.dims.h / 1000)))} thùng).`, "warning");
+        }
+        const PAL_TOP = PALLET_MODEL_TOP * (PALLET_STD_W / 1000 / PALLET_MODEL_UNIT); // 0.237
+        const materials = createBoxTextures(selectedItem.code, selectedItem.dimStr, colorMap[selectedItem.code] || '#e67e22');
+        const sW = selectedItem.dims.w / 1000, sL = selectedItem.dims.l / 1000, sH = selectedItem.dims.h / 1000;
+        plan.layerBoxes.forEach((layer, li) => {
+            layer.forEach(b => {
+                const sGeo = new THREE.BoxGeometry(b.w - 0.005, sH - 0.005, b.d - 0.005);
+                const sMesh = new THREE.Mesh(sGeo, materials);
+                sMesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(sGeo), new THREE.LineBasicMaterial({ color: 0x0 })));
+                sMesh.position.set(b.x, PAL_TOP + sH / 2 + li * plan.bH, b.z);
+                sMesh.rotation.y = b.ry;
+                const hit = new THREE.Mesh(new THREE.BoxGeometry(b.w, sH, b.d), new THREE.MeshBasicMaterial({ visible: false }));
+                hit.position.copy(sMesh.position);
+                hit.userData = { hw: b.w / 2, hd: b.d / 2, hh: sH / 2, origY: sMesh.position.y };
+                hit.add(sMesh);
+                pbScene.add(hit); pbHitBoxes.push(hit); pbBoxes.push(sMesh);
+            });
+        });
+        const wKg = pcs * (selectedItem.weight || 0);
+        document.getElementById('pb_boxCount').innerText = `${boxCount} Thùng`;
+        document.getElementById('pb_weight').innerText = wKg.toFixed(2) + ' Kg';
+    }
+    function generatePalletBoxes() { calcBuilderBoxes(); }
+    function capacityHint(d) {
+        const PAL = PALLET_STD_W / 1000, M = 0.02;
+        const a = Math.floor((PAL - M * 2) / (d.w / 1000)) * Math.floor((PAL - M * 2) / (d.l / 1000));
+        const b = Math.floor((PAL - M * 2) / (d.l / 1000)) * Math.floor((PAL - M * 2) / (d.w / 1000));
+        return Math.max(a, b);
+    }
+
+    function savePalletToQueue() {
+        const pcs = parseInt(document.getElementById('pb_pcs').value) || 0;
+        if (pcs <= 0) return showToast("Nhập số PCS muốn xếp lên pallet!", "warning");
+        if (pbBoxes.length === 0) return showToast("Chưa có thùng nào trên pallet!", "warning");
+        const item = {
+            id: Date.now(), code: selectedItem.code, isBig: false, totalPallets: 1,
+            weightPerPallet: pcs * (selectedItem.weight || 0),
+            dims: selectedItem.dims, dimStr: selectedItem.dimStr,
+            boxQty: pbBoxes.length,
+            customLayout: pbBoxes.map(b => ({ x: b.position.x, y: b.position.y, z: b.position.z, ry: b.rotation.y }))
+        };
+        queueData.push(item); saveData(); renderQueueTable(); renderStats();
+        closeModal('modalBuilder');
+        showToast(`Đã lưu pallet 1100×1100 (${pbBoxes.length} thùng) vào hàng chờ!`, "success");
+    }
 
     init();
 </script>
