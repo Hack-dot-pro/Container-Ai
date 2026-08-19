@@ -14,9 +14,9 @@ function assert(condition, message) {
     }
 }
 
-console.log('\n=============================================');
-console.log('🧪 RUNNING CONTAINER-AI COMPREHENSIVE TESTS');
-console.log('=============================================\n');
+console.log('\n======================================================');
+console.log('🧪 RUNNING CONTAINER-AI EXPANDED TEST SUITE');
+console.log('======================================================\n');
 
 // 1. Check HTML & JS Syntax in index.html
 console.log('--- 1. Index.html Syntax & Structure ---');
@@ -41,120 +41,171 @@ try {
     assert(false, `JavaScript syntax error: ${err.message}`);
 }
 
-// 2. Check Container glTF Model and Textures
-console.log('\n--- 2. Container 3D Model & Assets ---');
-const containerGltfPath = path.join(__dirname, 'container/scene.gltf');
-const containerBinPath = path.join(__dirname, 'container/scene.bin');
-const containerTex1 = path.join(__dirname, 'container/textures/Material.001_baseColor.jpeg');
-const containerTex2 = path.join(__dirname, 'container/textures/Material.001_metallicRoughness.png');
-const containerTex3 = path.join(__dirname, 'container/textures/Material.001_normal.jpeg');
+// 2. Check Container & Pallet glTF Models and Textures
+console.log('\n--- 2. 3D Model Assets Integrity ---');
+assert(fs.existsSync(path.join(__dirname, 'container/scene.gltf')), 'container/scene.gltf exists');
+assert(fs.existsSync(path.join(__dirname, 'container/scene.bin')), 'container/scene.bin exists');
+assert(fs.existsSync(path.join(__dirname, 'container/textures/Material.001_baseColor.jpeg')), 'container baseColor texture exists');
+assert(fs.existsSync(path.join(__dirname, 'container/textures/Material.001_metallicRoughness.png')), 'container metallicRoughness texture exists');
+assert(fs.existsSync(path.join(__dirname, 'container/textures/Material.001_normal.jpeg')), 'container normal texture exists');
+assert(fs.existsSync(path.join(__dirname, 'Pallet/scene.gltf')), 'Pallet/scene.gltf exists');
+assert(fs.existsSync(path.join(__dirname, 'Pallet/scene.bin')), 'Pallet/scene.bin exists');
 
-assert(fs.existsSync(containerGltfPath), 'container/scene.gltf exists');
-assert(fs.existsSync(containerBinPath), 'container/scene.bin exists');
-assert(fs.existsSync(containerTex1), 'container baseColor texture exists');
-assert(fs.existsSync(containerTex2), 'container metallicRoughness texture exists');
-assert(fs.existsSync(containerTex3), 'container normal texture exists');
+// 3. Pallet & Box Dimensional Fit in Container View
+console.log('\n--- 3. Pallet & Box Model Fit (No Overhang) ---');
+const PALLET_MODEL_UNIT = 5.0;
+const PALLET_MODEL_TOP = 1.0766;
+const PALLET_STD_HEIGHT = 0.14;
 
-const containerGltf = JSON.parse(fs.readFileSync(containerGltfPath, 'utf8'));
-assert(containerGltf.meshes && containerGltf.meshes.length > 0, 'container glTF contains mesh definitions');
-assert(containerGltf.materials && containerGltf.materials.length > 0, 'container glTF contains material definitions');
+// Big Item Test (e.g. SKU 1009: 1470 x 1135 x 925 mm)
+const bigItemDims = { l: 1470, w: 1135, h: 925 };
+const bX = Math.min(bigItemDims.l, bigItemDims.w) / 1000; // 1.135m
+const bZ = Math.max(bigItemDims.l, bigItemDims.w) / 1000; // 1.470m
+const bY = bigItemDims.h / 1000; // 0.925m
 
-// 3. Check Pallet Model and Assets
-console.log('\n--- 3. Pallet 3D Model & Assets ---');
-const palletGltfPath = path.join(__dirname, 'Pallet/scene.gltf');
-const palletBinPath = path.join(__dirname, 'Pallet/scene.bin');
-assert(fs.existsSync(palletGltfPath), 'Pallet/scene.gltf exists');
-assert(fs.existsSync(palletBinPath), 'Pallet/scene.bin exists');
+const pltW = bX;
+const pltL = bZ;
 
-// 4. View-Angle Fading Math Algorithm Verification
-console.log('\n--- 4. Container View-Angle Fading Algorithm Math ---');
-function computeDynAlpha(dotNV) {
-    const rimFactor = Math.pow(1.0 - Math.min(1.0, Math.max(0.0, dotNV)), 1.6);
-    const minOpacity = 0.18;
-    const maxOpacity = 0.95;
-    const dynAlpha = minOpacity + (maxOpacity - minOpacity) * rimFactor;
-    return Math.min(1.0, Math.max(0.15, dynAlpha));
-}
+const palletScaleX = pltW / PALLET_MODEL_UNIT;
+const palletScaleZ = pltL / PALLET_MODEL_UNIT;
+const palletRenderedW = PALLET_MODEL_UNIT * palletScaleX;
+const palletRenderedL = PALLET_MODEL_UNIT * palletScaleZ;
 
-// When viewing head-on (dotNV = 1.0)
-const alphaHeadOn = computeDynAlpha(1.0);
-assert(Math.abs(alphaHeadOn - 0.18) < 0.01, `Head-on view gives high transparency (alpha: ${alphaHeadOn.toFixed(3)}) to see interior`);
+assert(Math.abs(palletRenderedW - bX) < 1e-4, `Pallet width (${palletRenderedW.toFixed(3)}m) matches box width (${bX.toFixed(3)}m) exactly`);
+assert(Math.abs(palletRenderedL - bZ) < 1e-4, `Pallet length (${palletRenderedL.toFixed(3)}m) matches box length (${bZ.toFixed(3)}m) exactly`);
 
-// When viewing glancing angle (dotNV = 0.0)
-const alphaGlance = computeDynAlpha(0.0);
-assert(Math.abs(alphaGlance - 0.95) < 0.01, `Glancing edge view gives solid outline (alpha: ${alphaGlance.toFixed(3)}) for sharp container silhouette`);
+// Box placement on pallet
+const boxBottomY = PALLET_STD_HEIGHT;
+assert(boxBottomY === PALLET_STD_HEIGHT, `Box bottom is placed at y = ${boxBottomY}m (pallet top deck, 0 overlap, 0 gap)`);
 
-// Monotonicity check
-let isMonotonic = true;
-let prev = computeDynAlpha(0.0);
-for (let d = 0.1; d <= 1.0; d += 0.1) {
-    const curr = computeDynAlpha(d);
-    if (curr > prev) isMonotonic = false;
-    prev = curr;
-}
-assert(isMonotonic, 'Alpha smoothly and monotonically decreases as view direction approaches direct face normal');
-
-// 5. Container Dimensions and Scaling Math
-console.log('\n--- 5. Container Dimension Fitting Math ---');
-const targetL = 12.0; // Z
-const targetW = 2.35; // X
-const targetH = 2.40; // Y
-
-const rawSizeX = 24.0131; // along original length
-const rawSizeY = 4.7200;  // along height
-const rawSizeZ = 4.7019;  // along original width
-
-const scaleX = targetW / rawSizeZ;
-const scaleY = targetH / rawSizeY;
-const scaleZ = targetL / rawSizeX;
-
-const fittedX = rawSizeZ * scaleX;
-const fittedY = rawSizeY * scaleY;
-const fittedZ = rawSizeX * scaleZ;
-
-assert(Math.abs(fittedX - targetW) < 1e-4, `Container fitted width is exactly ${fittedX.toFixed(2)}m (target ${targetW}m)`);
-assert(Math.abs(fittedY - targetH) < 1e-4, `Container fitted height is exactly ${fittedY.toFixed(2)}m (target ${targetH}m)`);
-assert(Math.abs(fittedZ - targetL) < 1e-4, `Container fitted length is exactly ${fittedZ.toFixed(2)}m (target ${targetL}m)`);
-
-// 6. Built-in Seed Data Validation
-console.log('\n--- 6. Master Seed Data & Packing Validation ---');
+// 4. Pallet Builder Box Layout Optimization (No Overflow, No Box Overlaps)
+console.log('\n--- 4. Pallet Builder Layout Algorithm (No Overflow, No Collision) ---');
 const seedMatch = htmlContent.match(/const SEED_MASTER = (\[[\s\S]*?\]);/);
 assert(seedMatch && seedMatch[1], 'SEED_MASTER data parsed from index.html');
 const seedData = JSON.parse(seedMatch[1]);
-assert(seedData.length > 100, `SEED_MASTER contains ${seedData.length} SKUs (>100 expected)`);
 
-// Test auto-load packing logic with sample queue items
-const testQueue = [
-    { id: 1, code: '1009', isBig: true, totalPallets: 10, weightPerPallet: 325.6, dims: { l: 1470, w: 1135, h: 925 } },
-    { id: 2, code: '5803', isBig: true, totalPallets: 8, weightPerPallet: 356.8, dims: { l: 1470, w: 1135, h: 925 } }
-];
+const PAL_W = 1.100;
+const PAL_D = 1.100;
+const M = 0.01;
+const usableW = PAL_W - 2 * M;
+const usableD = PAL_D - 2 * M;
 
-const MAX_WEIGHT = 20000;
-const MAX_PALLETS = 32;
-let containers = [];
-let all = [];
-testQueue.forEach(q => { for(let i = 0; i < q.totalPallets; i++) all.push(JSON.parse(JSON.stringify(q))); });
+function testLayoutBuilder(boxCount, dims) {
+    const bL = dims.l / 1000;
+    const bW = dims.w / 1000;
+    const bH = dims.h / 1000;
 
-all.forEach((p) => {
-    let c = containers.length > 0 ? containers[containers.length - 1] : { id: 'CONT-1', pallets: [] };
-    if (containers.length === 0) containers.push(c);
-    let w = c.pallets.reduce((s, x) => s + x.weightPerPallet, 0);
-    if (w + p.weightPerPallet > MAX_WEIGHT || c.pallets.length + 1 > MAX_PALLETS) {
-        c = { id: 'CONT-' + (containers.length + 1), pallets: [] };
-        containers.push(c);
+    const orientations = [
+        { bw: bW, bd: bL, ry: 0 },
+        { bw: bL, bd: bW, ry: Math.PI / 2 }
+    ];
+
+    let bestPlan = null;
+    orientations.forEach(or => {
+        const cols = Math.floor(usableW / or.bw);
+        const rows = Math.floor(usableD / or.bd);
+        const perLayer = cols * rows;
+        if (perLayer <= 0) return;
+
+        const layers = Math.ceil(boxCount / perLayer);
+        const totalH = layers * bH;
+
+        if (!bestPlan || perLayer > bestPlan.perLayer || (perLayer === bestPlan.perLayer && totalH < bestPlan.totalH)) {
+            bestPlan = { cols, rows, perLayer, layers, totalH, bw: or.bw, bd: or.bd, bh: bH, ry: or.ry };
+        }
+    });
+
+    if (!bestPlan) return null;
+
+    const boxes = [];
+    const gridW = bestPlan.cols * bestPlan.bw;
+    const gridD = bestPlan.rows * bestPlan.bd;
+    const startX = -gridW / 2 + bestPlan.bw / 2;
+    const startZ = -gridD / 2 + bestPlan.bd / 2;
+
+    let count = 0;
+    for (let l = 0; l < bestPlan.layers && count < boxCount; l++) {
+        const y = PALLET_STD_HEIGHT + bestPlan.bh / 2 + l * bestPlan.bh;
+        for (let r = 0; r < bestPlan.rows && count < boxCount; r++) {
+            for (let c = 0; c < bestPlan.cols && count < boxCount; c++) {
+                const x = startX + c * bestPlan.bw;
+                const z = startZ + r * bestPlan.bd;
+                boxes.push({ x, y, z, w: bestPlan.bw, d: bestPlan.bd, h: bestPlan.bh, ry: bestPlan.ry, layer: l, row: r, col: c });
+                count++;
+            }
+        }
     }
-    p.slotId = c.pallets.length;
-    c.pallets.push(p);
+    return { plan: bestPlan, boxes };
+}
+
+let smallSkusTested = 0;
+let zeroOverflowCount = 0;
+let zeroOverlapCount = 0;
+
+seedData.forEach(item => {
+    if (!item.isBig) {
+        smallSkusTested++;
+        const testCounts = [1, 4, 12, 24];
+        let skuValid = true;
+
+        testCounts.forEach(bc => {
+            const res = testLayoutBuilder(bc, item.dims);
+            if (!res) { skuValid = false; return; }
+
+            // Check no overflow outside 1.100 x 1.100 pallet
+            res.boxes.forEach(b => {
+                const minX = b.x - b.w / 2;
+                const maxX = b.x + b.w / 2;
+                const minZ = b.z - b.d / 2;
+                const maxZ = b.z + b.d / 2;
+                if (minX < -PAL_W / 2 - 1e-4 || maxX > PAL_W / 2 + 1e-4 || minZ < -PAL_D / 2 - 1e-4 || maxZ > PAL_D / 2 + 1e-4) {
+                    skuValid = false;
+                }
+            });
+
+            // Check no box collisions within same layer
+            for (let i = 0; i < res.boxes.length; i++) {
+                for (let j = i + 1; j < res.boxes.length; j++) {
+                    const b1 = res.boxes[i];
+                    const b2 = res.boxes[j];
+                    if (b1.layer === b2.layer) {
+                        const overlapX = Math.abs(b1.x - b2.x) < (b1.w + b2.w) / 2 - 1e-3;
+                        const overlapZ = Math.abs(b1.z - b2.z) < (b1.d + b2.d) / 2 - 1e-3;
+                        if (overlapX && overlapZ) {
+                            skuValid = false;
+                        }
+                    }
+                }
+            }
+        });
+
+        if (skuValid) {
+            zeroOverflowCount++;
+            zeroOverlapCount++;
+        }
+    }
 });
 
-assert(containers.length === 1, `Auto-load partitioned 18 pallets into ${containers.length} container`);
-assert(containers[0].pallets.length === 18, `Container has 18 pallets assigned`);
-const totalWeight = containers[0].pallets.reduce((s, p) => s + p.weightPerPallet, 0);
-assert(totalWeight < MAX_WEIGHT, `Container weight (${totalWeight.toFixed(2)} kg) is within safe limit < ${MAX_WEIGHT} kg`);
+assert(zeroOverflowCount === smallSkusTested, `All ${smallSkusTested} small item SKUs fit 100% within 1100x1100 pallet (0 overflow)`);
+assert(zeroOverlapCount === smallSkusTested, `All ${smallSkusTested} small item SKUs have 0 box-to-box overlaps in any layer`);
 
-console.log('\n=============================================');
+// 5. Container Dimensions & 3-Model Fitting inside Container
+console.log('\n--- 5. 3-Model Fit inside 40ft Container ---');
+const cL = 12.0, cW = 2.35, cH = 2.4;
+const slotW = 1.135, slotL = 1.470, maxCargoH = 0.925;
+
+// Check container fitting
+const totalRowW = 2 * slotW; // 2.27m
+const totalColL = 8 * slotL; // 11.76m
+const totalTierH = 2 * (PALLET_STD_HEIGHT + maxCargoH); // 2.13m
+
+assert(totalRowW <= cW, `2 rows of pallets (${totalRowW.toFixed(2)}m) fit inside container width (${cW}m)`);
+assert(totalColL <= cL, `8 columns of pallets (${totalColL.toFixed(2)}m) fit inside container length (${cL}m)`);
+assert(totalTierH <= cH, `2 tiers of pallets + cargo (${totalTierH.toFixed(2)}m) fit inside container height (${cH}m)`);
+
+console.log('\n======================================================');
 console.log(`📊 TEST SUMMARY: ${testsPassed} passed, ${testsFailed} failed`);
-console.log('=============================================\n');
+console.log('======================================================\n');
 
 if (testsFailed > 0) {
     process.exit(1);

@@ -957,9 +957,10 @@
 
     // --- PALLET 3D MODEL (glTF: Pallet/scene.gltf — Realistic Wooden Pallet 5.0m x 5.0m) ---
     const PALLET_MODEL_UNIT = 5.0;   // bbox gốc model (mét)
-    const PALLET_MODEL_TOP = 1.077;  // chiều cao model (mét)
-    const PALLET_MODEL_MINY = -0.501; // mặt đáy model (mét)
+    const PALLET_MODEL_TOP = 1.0766;  // chiều cao model (mét)
+    const PALLET_MODEL_MINY = -0.5008; // mặt đáy model (mét)
     const PALLET_STD_W = 1100, PALLET_STD_L = 1100; // qui cách chuẩn pallet (mm)
+    const PALLET_STD_HEIGHT = 0.14; // chiều cao chuẩn pallet khi render (mét = 140mm)
     let palletModelCache = null, palletModelFailed = false, palletModelLoading = false;
     const palletModelWaiters = [];
 
@@ -988,26 +989,27 @@
         }
     }
 
-    // Pallet gỗ mặc định (procedural) — dùng khi glTF không tải được (VD: mở file:// trực tiếp)
-    function createProceduralPallet(w, d, h) {
+    // Pallet gỗ mặc định (procedural) — chuẩn kích thước w x d x h
+    function createProceduralPallet(w, d, h = PALLET_STD_HEIGHT) {
         const g = new THREE.Group();
-        const wood = new THREE.MeshStandardMaterial({ color: 0x9a6b3f });
-        const woodDark = new THREE.MeshStandardMaterial({ color: 0x7d542e });
-        const sTh = 0.09, sH = h * 0.8;
-        [-0.34 * w, 0, 0.34 * w].forEach(x => {
+        const wood = new THREE.MeshStandardMaterial({ color: 0x9a6b3f, roughness: 0.8 });
+        const woodDark = new THREE.MeshStandardMaterial({ color: 0x7d542e, roughness: 0.9 });
+        const sTh = Math.max(0.06, w * 0.08);
+        const sH = h * 0.65;
+        [-0.38 * w, 0, 0.38 * w].forEach(x => {
             const m = new THREE.Mesh(new THREE.BoxGeometry(sTh, sH, d), woodDark);
             m.position.set(x, sH / 2, 0);
             g.add(m);
         });
-        const bTh = 0.02;
-        [-0.34 * d, 0, 0.34 * d].forEach(z => {
-            const m = new THREE.Mesh(new THREE.BoxGeometry(w, bTh, 0.1), wood);
+        const bTh = Math.max(0.015, h * 0.15);
+        [-0.38 * d, 0, 0.38 * d].forEach(z => {
+            const m = new THREE.Mesh(new THREE.BoxGeometry(w, bTh, Math.max(0.08, d * 0.1)), wood);
             m.position.set(0, bTh / 2, z);
             g.add(m);
         });
-        const tTh = Math.max(0.01, h - sH);
+        const tTh = Math.max(0.018, h - sH);
         [-0.4 * d, -0.2 * d, 0, 0.2 * d, 0.4 * d].forEach(z => {
-            const m = new THREE.Mesh(new THREE.BoxGeometry(w, tTh, 0.16), wood);
+            const m = new THREE.Mesh(new THREE.BoxGeometry(w, tTh, Math.max(0.12, d * 0.15)), wood);
             m.position.set(0, sH + tTh / 2, z);
             g.add(m);
         });
@@ -1018,17 +1020,18 @@
     function makePalletMesh(w, d, cb) {
         loadPalletModel((src) => {
             if (!src) {
-                const s = Math.min(w, d) / PALLET_MODEL_UNIT;
-                return cb(createProceduralPallet(w, d, PALLET_MODEL_TOP * s));
+                return cb(createProceduralPallet(w, d, PALLET_STD_HEIGHT));
             }
             try {
                 const g = src.clone(true);
-                const s = Math.min(w, d) / PALLET_MODEL_UNIT;
-                g.scale.set(s, s, s);
-                g.position.y = -PALLET_MODEL_MINY * s;
+                const sx = w / PALLET_MODEL_UNIT;
+                const sz = d / PALLET_MODEL_UNIT;
+                const sy = PALLET_STD_HEIGHT / PALLET_MODEL_TOP;
+                g.scale.set(sx, sy, sz);
+                g.position.y = -PALLET_MODEL_MINY * sy;
                 g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
                 cb(g);
-            } catch (e) { cb(createProceduralPallet(w, d, PALLET_MODEL_TOP * (Math.min(w, d) / PALLET_MODEL_UNIT))); }
+            } catch (e) { cb(createProceduralPallet(w, d, PALLET_STD_HEIGHT)); }
         });
     }
 
@@ -1271,17 +1274,17 @@
             let visualGroup = new THREE.Group();
             visualGroup.position.y = -(slotH/2);
 
-            let pBaseMesh = new THREE.Mesh(new THREE.BoxGeometry(slotW - 0.02, 0.1, slotL - 0.02), new THREE.MeshStandardMaterial({ color: 0x8b5a2b }));
-            pBaseMesh.position.set(0, 0.05, 0);
+            // Kích thước chuẩn pallet fit hoàn toàn với kiện hàng (w theo trục X, d theo trục Z)
+            const pltW = pallet.isBig ? (Math.min(pallet.dims.l, pallet.dims.w) / 1000) : (PALLET_STD_W / 1000);
+            const pltL = pallet.isBig ? (Math.max(pallet.dims.l, pallet.dims.w) / 1000) : (PALLET_STD_L / 1000);
+
+            let pBaseMesh = createProceduralPallet(pltW, pltL, PALLET_STD_HEIGHT);
             visualGroup.add(pBaseMesh);
-            let cargoMeshes = [];
-            makePalletMesh(slotW, slotL, (pg) => {
+
+            makePalletMesh(pltW, pltL, (pg) => {
                 if (pg) {
                     visualGroup.remove(pBaseMesh);
                     visualGroup.add(pg);
-                    const palletTop = PALLET_MODEL_TOP * (Math.min(slotW, slotL) / PALLET_MODEL_UNIT);
-                    const dy = palletTop - 0.1;
-                    if (dy > 0.001) cargoMeshes.forEach(m => { if (m.position) m.position.y += dy; });
                 }
             });
 
@@ -1293,17 +1296,19 @@
                 let bY = pallet.dims.h / 1000;
                 const boxMesh = new THREE.Mesh(new THREE.BoxGeometry(bX, bY, bZ), materials);
                 boxMesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(boxMesh.geometry), new THREE.LineBasicMaterial({color: 0x0})));
-                boxMesh.position.set(0, 0.1 + (bY/2), 0);
+                boxMesh.position.set(0, PALLET_STD_HEIGHT + (bY/2), 0);
                 visualGroup.add(boxMesh);
                 cargoMeshes.push(boxMesh);
             } else if (pallet.customLayout) {
-                let sW = pallet.dims.w / 1000, sL = pallet.dims.l / 1000, sH = pallet.dims.h / 1000;
-                const sGeo = new THREE.BoxGeometry(sW-0.01, sH-0.01, sL-0.01);
                 pallet.customLayout.forEach(bData => {
+                    let bW = bData.w || (pallet.dims.w / 1000);
+                    let bD = bData.d || (pallet.dims.l / 1000);
+                    let bH = bData.h || (pallet.dims.h / 1000);
+                    const sGeo = new THREE.BoxGeometry(bW - 0.003, bH - 0.003, bD - 0.003);
                     let sMesh = new THREE.Mesh(sGeo, materials);
                     sMesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(sGeo), new THREE.LineBasicMaterial({color: 0x0})));
                     sMesh.position.set(bData.x, bData.y, bData.z);
-                    sMesh.rotation.y = bData.ry;
+                    sMesh.rotation.y = bData.ry || 0;
                     visualGroup.add(sMesh);
                 });
             }
@@ -1521,38 +1526,72 @@
         animate();
     }
 
-    // Xếp thùng con lên pallet chuẩn 1100x1100mm — greedy theo lớp, tối ưu chiều cao
+    // Xếp thùng con lên pallet chuẩn 1100x1100mm — tự động fit vừa vặn, không tràn mép pallet, không đè lên nhau
     function layoutBuilderBoxes(boxCount, dims) {
-        const PAL = PALLET_STD_W / 1000;
-        const bL = dims.l / 1000, bW = dims.w / 1000, bH = dims.h / 1000;
-        const M = 0.02, MAX_H_LAYER = 0.85;
-        let best = null;
-        [{x: bW, z: bL, ry: 0}, {x: bL, z: bW, ry: Math.PI / 2}].forEach(or => {
-            const cols = Math.max(1, Math.floor((PAL - M * 2) / or.x));
-            const rows = Math.max(1, Math.floor((PAL - M * 2) / or.z));
+        const PAL_W = PALLET_STD_W / 1000; // 1.100m
+        const PAL_D = PALLET_STD_L / 1000; // 1.100m
+        const M = 0.01; // 10mm margin an toàn
+        const usableW = PAL_W - 2 * M;
+        const usableD = PAL_D - 2 * M;
+
+        const bL = dims.l / 1000;
+        const bW = dims.w / 1000;
+        const bH = dims.h / 1000;
+
+        const orientations = [
+            { bw: bW, bd: bL, ry: 0 },
+            { bw: bL, bd: bW, ry: Math.PI / 2 }
+        ];
+
+        let bestPlan = null;
+
+        orientations.forEach(or => {
+            const cols = Math.floor(usableW / or.bw);
+            const rows = Math.floor(usableD / or.bd);
             const perLayer = cols * rows;
-            if (perLayer === 0) return;
-            let remaining = boxCount, layers = 0, layerBoxes = [];
-            while (remaining > 0 && layers < 10) {
-                const n = Math.min(perLayer, remaining);
-                const layer = [];
-                for (let i = 0; i < n; i++) {
-                    const c = i % cols, r = Math.floor(i / cols);
-                    layer.push({
-                        x: -PAL / 2 + M + or.x / 2 + c * or.x,
-                        z: -PAL / 2 + M + or.z / 2 + r * or.z,
-                        w: or.x, d: or.z, ry: or.ry
-                    });
-                }
-                layerBoxes.push(layer);
-                remaining -= n; layers++;
-            }
+            if (perLayer <= 0) return;
+
+            const layers = Math.ceil(boxCount / perLayer);
             const totalH = layers * bH;
-            if (remaining === 0 && totalH <= MAX_H_LAYER && (!best || totalH < best.totalH)) {
-                best = { layerBoxes, totalH, bH };
+
+            if (!bestPlan || perLayer > bestPlan.perLayer || (perLayer === bestPlan.perLayer && totalH < bestPlan.totalH)) {
+                bestPlan = { cols, rows, perLayer, layers, totalH, bw: or.bw, bd: or.bd, bh: bH, ry: or.ry };
             }
         });
-        return best;
+
+        if (!bestPlan) return null;
+
+        const boxes = [];
+        const gridW = bestPlan.cols * bestPlan.bw;
+        const gridD = bestPlan.rows * bestPlan.bd;
+        const startX = -gridW / 2 + bestPlan.bw / 2;
+        const startZ = -gridD / 2 + bestPlan.bd / 2;
+
+        let count = 0;
+        for (let l = 0; l < bestPlan.layers && count < boxCount; l++) {
+            const y = PALLET_STD_HEIGHT + bestPlan.bh / 2 + l * bestPlan.bh;
+            for (let r = 0; r < bestPlan.rows && count < boxCount; r++) {
+                for (let c = 0; c < bestPlan.cols && count < boxCount; c++) {
+                    const x = startX + c * bestPlan.bw;
+                    const z = startZ + r * bestPlan.bd;
+                    boxes.push({
+                        x: x,
+                        y: y,
+                        z: z,
+                        w: bestPlan.bw,
+                        d: bestPlan.bd,
+                        h: bestPlan.bh,
+                        ry: bestPlan.ry,
+                        layer: l,
+                        row: r,
+                        col: c
+                    });
+                    count++;
+                }
+            }
+        }
+
+        return { plan: bestPlan, boxes: boxes };
     }
 
     function clearBuilderBoxes() {
@@ -1565,38 +1604,50 @@
         if (!selectedItem || !pbScene) return;
         clearBuilderBoxes();
         const pcs = parseInt(document.getElementById('pb_pcs').value) || 0;
-        if (pcs <= 0) { document.getElementById('pb_boxCount').innerText = '0 Thùng'; document.getElementById('pb_weight').innerText = '0.00 Kg'; return; }
+        if (pcs <= 0) { 
+            document.getElementById('pb_boxCount').innerText = '0 Thùng'; 
+            document.getElementById('pb_weight').innerText = '0.00 Kg'; 
+            return; 
+        }
         const packQty = selectedItem.packQty || 1;
         const boxCount = Math.ceil(pcs / packQty);
-        const plan = layoutBuilderBoxes(boxCount, selectedItem.dims);
-        if (!plan) {
-            const cap = capacityHint(selectedItem.dims);
-            return showToast(`Không đủ chỗ trên pallet 1100×1100! Giảm số PCS (tối đa ~${cap * Math.max(1, Math.floor(0.85 / (selectedItem.dims.h / 1000)))} thùng).`, "warning");
+        const result = layoutBuilderBoxes(boxCount, selectedItem.dims);
+        if (!result || !result.boxes || result.boxes.length === 0) {
+            return showToast(`Kích thước thùng (${selectedItem.dimStr}) quá lớn so với pallet 1100×1100!`, "warning");
         }
-        const PAL_TOP = PALLET_MODEL_TOP * (PALLET_STD_W / 1000 / PALLET_MODEL_UNIT); // 0.237
+
+        if (result.plan.totalH > 2.0) {
+            showToast(`Cảnh báo: Chiều cao kiện (${result.plan.totalH.toFixed(2)}m) vượt quá chiều cao xếp pallet chuẩn!`, "warning");
+        }
+
         const materials = createBoxTextures(selectedItem.code, selectedItem.dimStr, colorMap[selectedItem.code] || '#e67e22');
-        const sW = selectedItem.dims.w / 1000, sL = selectedItem.dims.l / 1000, sH = selectedItem.dims.h / 1000;
-        plan.layerBoxes.forEach((layer, li) => {
-            layer.forEach(b => {
-                const sGeo = new THREE.BoxGeometry(b.w - 0.005, sH - 0.005, b.d - 0.005);
-                const sMesh = new THREE.Mesh(sGeo, materials);
-                sMesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(sGeo), new THREE.LineBasicMaterial({ color: 0x0 })));
-                sMesh.position.set(b.x, PAL_TOP + sH / 2 + li * plan.bH, b.z);
-                sMesh.rotation.y = b.ry;
-                const hit = new THREE.Mesh(new THREE.BoxGeometry(b.w, sH, b.d), new THREE.MeshBasicMaterial({ visible: false }));
-                hit.position.copy(sMesh.position);
-                hit.userData = { hw: b.w / 2, hd: b.d / 2, hh: sH / 2, origY: sMesh.position.y };
-                hit.add(sMesh);
-                pbScene.add(hit); pbHitBoxes.push(hit); pbBoxes.push(sMesh);
-            });
+        
+        result.boxes.forEach(b => {
+            const sGeo = new THREE.BoxGeometry(b.w - 0.003, b.h - 0.003, b.d - 0.003);
+            const sMesh = new THREE.Mesh(sGeo, materials);
+            sMesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(sGeo), new THREE.LineBasicMaterial({ color: 0x0 })));
+            sMesh.position.set(b.x, b.y, b.z);
+            sMesh.rotation.y = b.ry;
+            sMesh.userData = { w: b.w, d: b.d, h: b.h };
+
+            const hit = new THREE.Mesh(new THREE.BoxGeometry(b.w, b.h, b.d), new THREE.MeshBasicMaterial({ visible: false }));
+            hit.position.copy(sMesh.position);
+            hit.userData = { hw: b.w / 2, hd: b.d / 2, hh: b.h / 2, origY: sMesh.position.y, w: b.w, d: b.d, h: b.h };
+            hit.add(sMesh);
+
+            pbScene.add(hit);
+            pbHitBoxes.push(hit);
+            pbBoxes.push(sMesh);
         });
+
         const wKg = pcs * (selectedItem.weight || 0);
-        document.getElementById('pb_boxCount').innerText = `${boxCount} Thùng`;
+        document.getElementById('pb_boxCount').innerText = `${boxCount} Thùng (${result.plan.layers} lớp)`;
         document.getElementById('pb_weight').innerText = wKg.toFixed(2) + ' Kg';
     }
+
     function generatePalletBoxes() { calcBuilderBoxes(); }
     function capacityHint(d) {
-        const PAL = PALLET_STD_W / 1000, M = 0.02;
+        const PAL = PALLET_STD_W / 1000, M = 0.01;
         const a = Math.floor((PAL - M * 2) / (d.w / 1000)) * Math.floor((PAL - M * 2) / (d.l / 1000));
         const b = Math.floor((PAL - M * 2) / (d.l / 1000)) * Math.floor((PAL - M * 2) / (d.w / 1000));
         return Math.max(a, b);
@@ -1606,16 +1657,35 @@
         const pcs = parseInt(document.getElementById('pb_pcs').value) || 0;
         if (pcs <= 0) return showToast("Nhập số PCS muốn xếp lên pallet!", "warning");
         if (pbBoxes.length === 0) return showToast("Chưa có thùng nào trên pallet!", "warning");
+        const targetP = parseInt(document.getElementById('pb_targetPallets').value) || 1;
+
+        const customLayout = pbBoxes.map(b => ({
+            x: b.position.x,
+            y: b.position.y,
+            z: b.position.z,
+            ry: b.rotation.y,
+            w: (b.userData && b.userData.w) || (selectedItem.dims.w / 1000),
+            d: (b.userData && b.userData.d) || (selectedItem.dims.l / 1000),
+            h: (b.userData && b.userData.h) || (selectedItem.dims.h / 1000)
+        }));
+
         const item = {
-            id: Date.now(), code: selectedItem.code, isBig: false, totalPallets: 1,
+            id: Date.now(),
+            code: selectedItem.code,
+            isBig: false,
+            totalPallets: targetP,
             weightPerPallet: pcs * (selectedItem.weight || 0),
-            dims: selectedItem.dims, dimStr: selectedItem.dimStr,
+            dims: selectedItem.dims,
+            dimStr: selectedItem.dimStr,
             boxQty: pbBoxes.length,
-            customLayout: pbBoxes.map(b => ({ x: b.position.x, y: b.position.y, z: b.position.z, ry: b.rotation.y }))
+            customLayout: customLayout
         };
-        queueData.push(item); saveData(); renderQueueTable(); renderStats();
+        queueData.push(item);
+        saveData();
+        renderQueueTable();
+        renderStats();
         closeModal('modalBuilder');
-        showToast(`Đã lưu pallet 1100×1100 (${pbBoxes.length} thùng) vào hàng chờ!`, "success");
+        showToast(`Đã lưu ${targetP} Pallet 1100×1100 (${pbBoxes.length} thùng) vào hàng chờ!`, "success");
     }
 
     init();
