@@ -421,15 +421,56 @@
 
         <!-- ============ PAGE: MASTER DATA ============ -->
         <section id="page-master" class="page">
-            <div class="card" style="margin-bottom:20px;">
-                <div class="card-head">
-                    <h3>Nạp Dữ Liệu Master</h3>
-                    <span class="sub">Chuẩn 6 cột: Khách hàng | Mã hàng | Quy cách | Trọng lượng | Kích thước | Loại</span>
+            <div class="layout-2col" style="margin-bottom:20px;">
+                <div class="card">
+                    <div class="card-head">
+                        <h3>Nạp Dữ Liệu Master</h3>
+                        <span class="sub">Chuẩn 6 cột: Khách hàng | Mã hàng | Quy cách | Trọng lượng | Kích thước | Loại</span>
+                    </div>
+                    <div class="flex-row" style="align-items:center; gap:12px; background:var(--primary-soft); padding:14px; border-radius:10px;">
+                        <input type="file" id="excelInput" accept=".xlsx, .xls" style="width:320px; background:var(--white);">
+                        <button class="btn primary" onclick="importExcelFile()">⬆ Nạp File Excel</button>
+                        <span class="info-line" style="flex:1;">File mẫu: <b>Quycach.xlsx</b> (đã nhúng sẵn 132 mã)</span>
+                    </div>
                 </div>
-                <div class="flex-row" style="align-items:center; gap:12px; background:var(--primary-soft); padding:14px; border-radius:10px;">
-                    <input type="file" id="excelInput" accept=".xlsx, .xls" style="width:320px; background:var(--white);">
-                    <button class="btn primary" onclick="importExcelFile()">⬆ Nạp File Excel</button>
-                    <span class="info-line" style="flex:1;">File mẫu: <b>Quycach.xlsx</b></span>
+                <div class="card">
+                    <div class="card-head">
+                        <h3>➕ Thêm / Sửa Dữ Liệu Mới</h3>
+                        <span class="sub">Nhập tay — tương thích cấu trúc masterData</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Khách hàng</label>
+                            <input id="m_brand" placeholder="VD: Southern Motion">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Mã Hàng <span style="color:var(--danger);">*</span></label>
+                            <input id="m_code" placeholder="VD: 7157150001" style="font-weight:700;">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Quy cách (Cái/Thùng)</label>
+                            <input id="m_pack" type="number" placeholder="VD: 1000">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Kg / Sản phẩm</label>
+                            <input id="m_weight" type="number" step="any" placeholder="VD: 0.0012">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Kích thước (LxWxH mm)</label>
+                            <input id="m_dim" placeholder="VD: 200*200*100">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Loại Pallet</label>
+                            <input id="m_type" placeholder="VD: Kiện Lớn / Thùng">
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top:16px;">
+                        <button class="btn primary" style="flex:1;" onclick="addManualItem()">➕ Thêm / Cập Nhật</button>
+                        <button class="btn ghost" onclick="clearManualForm()">↺ Xóa Trống</button>
+                    </div>
+                    <div class="tip-text" style="margin-top:12px;">
+                        Mã hàng trùng sẽ <b>ghi đè</b> dữ liệu cũ (upsert) — đúng hành vi khi nạp Excel. Bỏ trống kích thước sẽ mặc định kiện lớn <b>1470×1135×925</b>.
+                    </div>
                 </div>
             </div>
             <div class="card">
@@ -746,6 +787,29 @@
         document.querySelector('#masterTable tbody').innerHTML = masterData.map(i => `<tr><td>${i.brand}</td><td><b>${i.code}</b></td><td>${i.packQty}</td><td>${i.weight}</td><td>${i.dimStr}</td><td><span class="tag ${i.isBig ? 'tag-big' : 'tag-small'}">${i.isBig ? 'Kiện Lớn' : 'Thùng Nhỏ'}</span></td></tr>`).join('');
     }
     function updateDataList() { document.getElementById('itemList').innerHTML = masterData.map(i => `<option value="${i.code}">`).join(''); }
+
+    // --- 1B. THÊM / SỬA DỮ LIỆU TAY (tương thích masterData) ---
+    function clearManualForm() {
+        ['m_brand', 'm_code', 'm_pack', 'm_weight', 'm_dim', 'm_type'].forEach(id => document.getElementById(id).value = '');
+    }
+    function addManualItem() {
+        const brand = document.getElementById('m_brand').value.trim();
+        const code = document.getElementById('m_code').value.trim();
+        const packQty = parseInt(document.getElementById('m_pack').value) || 1;
+        const weight = parseFloat(document.getElementById('m_weight').value) || 0;
+        const dimStr = document.getElementById('m_dim').value.trim();
+        const type = document.getElementById('m_type').value.trim();
+        if (!code) return showToast("Nhập Mã Hàng trước!", "error");
+        const dims = parseDimStr(dimStr);
+        const item = { brand, code, packQty, weight, dimStr, dims, isBig: dims.l >= 1000, type };
+        const idx = masterData.findIndex(i => i.code === code);
+        if (idx > -1) masterData[idx] = item; else masterData.push(item);
+        if (!colorMap[code]) colorMap[code] = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+        saveData(); renderMasterTable(); updateDataList(); renderStats();
+        showToast(idx > -1 ? `Đã cập nhật mã ${code}!` : `Đã thêm mã ${code} (${item.isBig ? 'Kiện Lớn' : 'Thùng Nhỏ'})!`, "success");
+        clearManualForm();
+        document.getElementById('m_code').focus();
+    }
 
     // --- 2. HÀNG CHỜ ---
     function autoFillItem() {
