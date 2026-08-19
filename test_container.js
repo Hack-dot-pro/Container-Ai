@@ -27,6 +27,9 @@ assert(htmlContent.includes('makeContainerMesh'), 'makeContainerMesh function is
 assert(htmlContent.includes('applyContainerFadingMaterial'), 'applyContainerFadingMaterial shader function is present');
 assert(htmlContent.includes('loadContainerModel'), 'loadContainerModel is present');
 assert(!htmlContent.includes('0x00ffff'), 'Old cyan wireframe lines are removed');
+assert(htmlContent.includes('addCurrentSkuToPallet'), 'addCurrentSkuToPallet function is present');
+assert(htmlContent.includes('removePbSku'), 'removePbSku function is present');
+assert(htmlContent.includes('fitBuilderCamera'), 'fitBuilderCamera auto-framing function is present');
 
 // Extract script content and validate JS syntax via node vm
 const scriptMatch = htmlContent.match(/<script>([\s\S]*?)<\/script>/);
@@ -90,7 +93,7 @@ const M = 0.01;
 const usableW = PAL_W - 2 * M;
 const usableD = PAL_D - 2 * M;
 
-function testLayoutBuilder(boxCount, dims) {
+function testLayoutBuilder(boxCount, dims, baseTopY = PALLET_STD_HEIGHT) {
     const bL = dims.l / 1000;
     const bW = dims.w / 1000;
     const bH = dims.h / 1000;
@@ -125,7 +128,7 @@ function testLayoutBuilder(boxCount, dims) {
 
     let count = 0;
     for (let l = 0; l < bestPlan.layers && count < boxCount; l++) {
-        const y = PALLET_STD_HEIGHT + bestPlan.bh / 2 + l * bestPlan.bh;
+        const y = baseTopY + bestPlan.bh / 2 + l * bestPlan.bh;
         for (let r = 0; r < bestPlan.rows && count < boxCount; r++) {
             for (let c = 0; c < bestPlan.cols && count < boxCount; c++) {
                 const x = startX + c * bestPlan.bw;
@@ -189,12 +192,45 @@ seedData.forEach(item => {
 assert(zeroOverflowCount === smallSkusTested, `All ${smallSkusTested} small item SKUs fit 100% within 1100x1100 pallet (0 overflow)`);
 assert(zeroOverlapCount === smallSkusTested, `All ${smallSkusTested} small item SKUs have 0 box-to-box overlaps in any layer`);
 
-// 5. Container Dimensions & 3-Model Fitting inside Container
-console.log('\n--- 5. 3-Model Fit inside 40ft Container ---');
+// 5. Multi-SKU Mixed Pallet Stacking Test
+console.log('\n--- 5. Multi-SKU Mixed Pallet Stacking ---');
+const smallItems = seedData.filter(i => !i.isBig);
+assert(smallItems.length >= 2, 'At least 2 small SKUs exist for multi-SKU testing');
+
+if (smallItems.length >= 2) {
+    const sku1 = smallItems[0];
+    const sku2 = smallItems[1];
+    
+    // Stack SKU 1: 6 boxes
+    const res1 = testLayoutBuilder(6, sku1.dims, PALLET_STD_HEIGHT);
+    const topY1 = Math.max(...res1.boxes.map(b => b.y + b.h / 2));
+    
+    // Stack SKU 2: 4 boxes on top of SKU 1
+    const res2 = testLayoutBuilder(4, sku2.dims, topY1);
+    
+    const allMixedBoxes = [...res1.boxes, ...res2.boxes];
+    
+    // Check all boxes fit within pallet 1.1 x 1.1
+    let mixedAllInside = true;
+    allMixedBoxes.forEach(b => {
+        const minX = b.x - b.w / 2, maxX = b.x + b.w / 2;
+        const minZ = b.z - b.d / 2, maxZ = b.z + b.d / 2;
+        if (minX < -PAL_W/2 - 1e-4 || maxX > PAL_W/2 + 1e-4 || minZ < -PAL_D/2 - 1e-4 || maxZ > PAL_D/2 + 1e-4) {
+            mixedAllInside = false;
+        }
+    });
+    assert(mixedAllInside, 'Multi-SKU mixed boxes fit 100% inside 1100x1100 pallet boundary');
+    
+    // Check SKU2 is placed above SKU1 with 0 collision
+    const minYSku2 = Math.min(...res2.boxes.map(b => b.y - b.h / 2));
+    assert(minYSku2 >= topY1 - 1e-4, `SKU2 layer starts cleanly at y = ${minYSku2.toFixed(3)}m (above SKU1 top at ${topY1.toFixed(3)}m)`);
+}
+
+// 6. Container Dimensions & 3-Model Fitting inside Container
+console.log('\n--- 6. 3-Model Fit inside 40ft Container ---');
 const cL = 12.0, cW = 2.35, cH = 2.4;
 const slotW = 1.135, slotL = 1.470, maxCargoH = 0.925;
 
-// Check container fitting
 const totalRowW = 2 * slotW; // 2.27m
 const totalColL = 8 * slotL; // 11.76m
 const totalTierH = 2 * (PALLET_STD_HEIGHT + maxCargoH); // 2.13m
