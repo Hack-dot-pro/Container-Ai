@@ -1032,6 +1032,174 @@
         });
     }
 
+    // --- CONTAINER 3D MODEL (glTF: container/scene.gltf — 40ft Shipping Container) ---
+    let containerModelCache = null, containerModelFailed = false, containerModelLoading = false;
+    const containerModelWaiters = [];
+
+    // Thuật toán làm mờ viền & vách container theo góc nhìn hướng vào (View-Angle Dynamic Fading)
+    function applyContainerFadingMaterial(mat) {
+        mat.transparent = true;
+        mat.depthWrite = false;
+        mat.side = THREE.DoubleSide;
+
+        mat.onBeforeCompile = (shader) => {
+            shader.vertexShader = `
+                varying vec3 vCustomWorldPos;
+                varying vec3 vCustomWorldNorm;
+                ${shader.vertexShader}
+            `.replace(
+                '#include <worldpos_vertex>',
+                `
+                #include <worldpos_vertex>
+                vCustomWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;
+                vCustomWorldNorm = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
+                `
+            );
+
+            shader.fragmentShader = `
+                varying vec3 vCustomWorldPos;
+                varying vec3 vCustomWorldNorm;
+                ${shader.fragmentShader}
+            `.replace(
+                '#include <dithering_fragment>',
+                `
+                #include <dithering_fragment>
+                // Thuật toán làm mờ khi góc nhìn hướng trực diện vào container (View-Angle Dynamic Fade)
+                vec3 viewDir = normalize(cameraPosition - vCustomWorldPos);
+                vec3 norm = normalize(vCustomWorldNorm);
+                float dotNV = abs(dot(norm, viewDir));
+
+                // Khi góc nhìn trực diện hướng thẳng vào mặt/viền (dotNV -> 1.0), làm mờ / trong suốt (opacity thấp)
+                // Khi góc nhìn nghiêng/tiếp tuyến (dotNV -> 0.0), hiển thị rõ nét kết cấu viền (opacity cao)
+                float rimFactor = pow(1.0 - dotNV, 1.6);
+                float dynAlpha = clamp(mix(0.18, 0.95, rimFactor), 0.15, 1.0);
+
+                gl_FragColor.a = gl_FragColor.a * dynAlpha;
+                `
+            );
+        };
+    }
+
+    function loadContainerModel(cb) {
+        if (containerModelCache) return cb(containerModelCache);
+        if (containerModelFailed) return cb(null);
+        if (containerModelLoading) { containerModelWaiters.push(cb); return; }
+        containerModelLoading = true;
+        try {
+            const loader = new THREE.GLTFLoader();
+            loader.load('container/scene.gltf', (gltf) => {
+                containerModelCache = gltf.scene;
+                cb(containerModelCache);
+                containerModelWaiters.splice(0).forEach(f => f(containerModelCache));
+            }, undefined, () => {
+                containerModelFailed = true;
+                showToast('Không tải được model container 3D — dùng container mô phỏng mặc định!', 'warning');
+                cb(null);
+                containerModelWaiters.splice(0).forEach(f => f(null));
+            });
+        } catch (e) {
+            containerModelFailed = true;
+            showToast('Không tải được model container 3D — dùng container mô phỏng mặc định!', 'warning');
+            cb(null);
+            containerModelWaiters.splice(0).forEach(f => f(null));
+        }
+    }
+
+    // Container mô phỏng thủ công (procedural fallback) — dùng khi glTF không tải được
+    function createProceduralContainer(w, h, l) {
+        const group = new THREE.Group();
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x1f2429, roughness: 0.9, metalness: 0.1 });
+        const floor = new THREE.Mesh(new THREE.BoxGeometry(w, 0.05, l), floorMat);
+        floor.position.set(0, 0.025, 0);
+        group.add(floor);
+
+        const wallMat = new THREE.MeshStandardMaterial({ color: 0x2b5b84, roughness: 0.6, metalness: 0.3 });
+        applyContainerFadingMaterial(wallMat);
+
+        const t = 0.02;
+        // Vách trái (+X), vách phải (-X), nóc (+Y), vách sau (-Z)
+        const leftWall = new THREE.Mesh(new THREE.BoxGeometry(t, h, l), wallMat);
+        leftWall.position.set(w / 2, h / 2, 0);
+        group.add(leftWall);
+
+        const rightWall = new THREE.Mesh(new THREE.BoxGeometry(t, h, l), wallMat);
+        rightWall.position.set(-w / 2, h / 2, 0);
+        group.add(rightWall);
+
+        const roof = new THREE.Mesh(new THREE.BoxGeometry(w, t, l), wallMat);
+        roof.position.set(0, h, 0);
+        group.add(roof);
+
+        const backWall = new THREE.Mesh(new THREE.BoxGeometry(w, h, t), wallMat);
+        backWall.position.set(0, h / 2, -l / 2);
+        group.add(backWall);
+
+        return group;
+    }
+
+    // Tạo group container bằng model 3D thật (glTF) được căn chỉnh chuẩn kích thước w, h, l (mét)
+    function makeContainerMesh(targetW, targetH, targetL, cb) {
+        loadContainerModel((src) => {
+            if (!src) {
+                return cb(createProceduralContainer(targetW, targetH, targetL));
+            }
+            try {
+                const model = src.clone(true);
+
+                // Áp dụng thuật toán làm mờ viền & vách theo góc nhìn cho tất cả vật liệu của container
+                model.traverse((child) => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                        if (child.material) {
+                            const mat = child.material.clone();
+                            applyContainerFadingMaterial(mat);
+                            child.material = mat;
+                        }
+                    }
+                });
+
+                const wrapper = new THREE.Group();
+
+                // Tính bounding box của model gốc để căn chỉnh & co giãn chính xác
+                const bbox = new THREE.Box3().setFromObject(model);
+                const size = new THREE.Vector3();
+                bbox.getSize(size);
+                const center = new THREE.Vector3();
+                bbox.getCenter(center);
+
+                model.position.set(-center.x, -center.y, -center.z);
+
+                const innerRotGroup = new THREE.Group();
+                innerRotGroup.add(model);
+                // Xoay 90 độ quanh trục Y để chiều dài container khớp trục Z
+                innerRotGroup.rotation.y = Math.PI / 2;
+
+                const sx = targetW / (size.z > 0 ? size.z : 4.702);
+                const sy = targetH / (size.y > 0 ? size.y : 4.720);
+                const sz = targetL / (size.x > 0 ? size.x : 24.013);
+                innerRotGroup.scale.set(sx, sy, sz);
+
+                innerRotGroup.position.set(0, targetH / 2, 0);
+                wrapper.add(innerRotGroup);
+
+                // Đáy sàn container chịu tải vững chắc
+                const baseFloor = new THREE.Mesh(
+                    new THREE.BoxGeometry(targetW, 0.04, targetL),
+                    new THREE.MeshStandardMaterial({ color: 0x1a2026, roughness: 0.9 })
+                );
+                baseFloor.position.set(0, 0.02, 0);
+                baseFloor.receiveShadow = true;
+                wrapper.add(baseFloor);
+
+                cb(wrapper);
+            } catch (err) {
+                console.error('Error creating container mesh:', err);
+                cb(createProceduralContainer(targetW, targetH, targetL));
+            }
+        });
+    }
+
     function createBoxTextures(code, dimStr, bgColorHex) {
         const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 512;
         const ctx = canvas.getContext('2d');
@@ -1067,15 +1235,13 @@
         controls.enableDamping = true;
 
         scene.add(new THREE.AmbientLight(0xffffff, 0.9));
-        const dl = new THREE.DirectionalLight(0xffffff, 0.5); dl.position.set(10, 20, 30); scene.add(dl);
+        const dl = new THREE.DirectionalLight(0xffffff, 0.6); dl.position.set(10, 20, 30); scene.add(dl);
+        const dl2 = new THREE.DirectionalLight(0xffffff, 0.35); dl2.position.set(-10, 15, -20); scene.add(dl2);
 
-        scene.add(new THREE.Mesh(new THREE.BoxGeometry(cW, 0.05, cL), new THREE.MeshStandardMaterial({color: 0x333333})));
-
-        const thick = 0.05; const fMat = new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x005555 }); const fg = new THREE.Group();
-        [ [cW/2, cL/2], [-cW/2, cL/2], [cW/2, -cL/2], [-cW/2, -cL/2] ].forEach(p => { let m = new THREE.Mesh(new THREE.BoxGeometry(thick, cH, thick), fMat); m.position.set(p[0], cH/2, p[1]); fg.add(m); });
-        [ [0, cL/2], [cH, cL/2], [0, -cL/2], [cH, -cL/2] ].forEach(p => { let m = new THREE.Mesh(new THREE.BoxGeometry(cW, thick, thick), fMat); m.position.set(0, p[0], p[1]); fg.add(m); });
-        [ [cW/2, 0], [-cW/2, 0], [cW/2, cH], [-cW/2, cH] ].forEach(p => { let m = new THREE.Mesh(new THREE.BoxGeometry(thick, thick, cL), fMat); m.position.set(p[0], p[1], 0); fg.add(m); });
-        scene.add(fg);
+        // Container 3D model with view-angle fading algorithm (thay thế khung line cũ)
+        makeContainerMesh(cW, cH, cL, (cg) => {
+            if (cg) scene.add(cg);
+        });
 
         hitBoxes = []; slotOccupancy = {};
 
