@@ -1493,6 +1493,68 @@
         init3D(cIdx);
     }
 
+    /**
+     * =========================================================================
+     * THUẬT TOÁN THU PHÓNG THEO CON TRỎ CHUỘT (ZOOM TO CURSOR) VÀ GIỚI HẠN ZOOM
+     * =========================================================================
+     * - Khi rê chuột đến bất kỳ khu vực nào và cuộn wheel: phóng to/thu nhỏ tập trung
+     *   ngay tại vị trí con trỏ chuột trong không gian 3D.
+     * - Giữ nguyên độ mượt mà (inertia / damping = 0.05).
+     * - Giới hạn khoảng cách zoom tối đa (maxDistance) để tránh thu quá nhỏ làm mất model,
+     *   đảm bảo luôn bao quát toàn cảnh mô hình container và pallet.
+     */
+    function attachZoomToCursor(domElement, cam, ctrl, scn, defaultTarget, minD, maxD, boundsLimit) {
+        if (!domElement || !cam || !ctrl) return;
+        const ray = new THREE.Raycaster();
+        const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -defaultTarget.y);
+        const hitVec = new THREE.Vector3();
+
+        domElement.addEventListener('wheel', (e) => {
+            const rect = domElement.getBoundingClientRect();
+            if (rect.width <= 0 || rect.height <= 0) return;
+            const mx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+            const my = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+            ray.setFromCamera(new THREE.Vector2(mx, my), cam);
+
+            // Raycast kiểm tra giao điểm với vật thể 3D thực tế
+            const hits = ray.intersectObjects(scn.children, true).filter(h =>
+                h.object.visible && !h.object.isHelper &&
+                h.object !== ghostMesh && h.object !== pbGhost &&
+                (!h.object.material || h.object.material.visible !== false)
+            );
+
+            let targetPoint = null;
+            if (hits.length > 0) {
+                targetPoint = hits[0].point;
+            } else {
+                if (ray.ray.intersectPlane(plane, hitVec)) {
+                    targetPoint = hitVec;
+                }
+            }
+
+            if (targetPoint) {
+                const curDist = cam.position.distanceTo(ctrl.target);
+                if (e.deltaY < 0) {
+                    // Phóng to (Zoom IN): dịch tâm ngắm mượt mà hướng về điểm trỏ chuột
+                    if (curDist > minD + 0.05) {
+                        ctrl.target.lerp(targetPoint, 0.08);
+                    }
+                } else {
+                    // Thu nhỏ (Zoom OUT): hồi tâm ngắm mượt mà về vị trí cân bằng trung tâm
+                    if (curDist < maxD - 0.05) {
+                        ctrl.target.lerp(defaultTarget, 0.05);
+                    }
+                }
+                if (boundsLimit) {
+                    ctrl.target.x = Math.max(boundsLimit.minX, Math.min(boundsLimit.maxX, ctrl.target.x));
+                    ctrl.target.y = Math.max(boundsLimit.minY, Math.min(boundsLimit.maxY, ctrl.target.y));
+                    ctrl.target.z = Math.max(boundsLimit.minZ, Math.min(boundsLimit.maxZ, ctrl.target.z));
+                }
+            }
+        }, { passive: true });
+    }
+
     function init3D(cIdx) {
         let contData = containers[cIdx];
         if (!contData) return;
@@ -1511,11 +1573,16 @@
         controls.dampingFactor = 0.05; // Quán tính mượt mà 60fps/120fps, loại bỏ hoàn toàn giựt hình
         controls.enableZoom = true;
         controls.zoomSpeed = 0.45; // Tốc độ zoom chậm rãi, mượt mà và kiểm soát chính xác
-        controls.minDistance = 2.0; // Cự ly zoom gần nhất
-        controls.maxDistance = 45.0; // Cự ly zoom xa nhất
+        controls.minDistance = 2.0; // Cự ly zoom gần nhất (quan sát chi tiết từng kiện)
+        controls.maxDistance = 24.0; // Giới hạn thu nhỏ: không bị mất model, luôn nhìn rõ toàn cảnh container
         controls.rotateSpeed = 0.7;
         controls.panSpeed = 0.7;
         controls.target.set(0, 1.2, 0); // Tâm quay cố định tại giữa container
+
+        // Gắn hiệu ứng thu phóng theo vị trí trỏ chuột
+        attachZoomToCursor(containerDom, camera, controls, scene, new THREE.Vector3(0, 1.2, 0), 2.0, 24.0, {
+            minX: -6.0, maxX: 6.0, minY: 0.2, maxY: 3.0, minZ: -2.0, maxZ: 2.0
+        });
 
         scene.add(new THREE.AmbientLight(0xffffff, 0.9));
         const dl = new THREE.DirectionalLight(0xffffff, 0.6); dl.position.set(10, 20, 30); scene.add(dl);
@@ -1707,6 +1774,33 @@
     let pbLastPackingResult = null;
 
     /**
+     * Lấy Bounding Box thực tế của Model Pallet để làm nền chuẩn xác
+     */
+    function getPalletDynamicBounds() {
+        let minX = -PALLET_STD_W / 2000; // -0.55m
+        let maxX = PALLET_STD_W / 2000;  // 0.55m
+        let minZ = -PALLET_STD_L / 2000; // -0.55m
+        let maxZ = PALLET_STD_L / 2000;  // 0.55m
+        let baseY = PALLET_STD_HEIGHT;   // 0.14m
+
+        if (pbPalletGroup && pbPalletGroup.children.length > 0) {
+            const b3 = new THREE.Box3().setFromObject(pbPalletGroup);
+            if (b3 && isFinite(b3.min.x) && isFinite(b3.max.x) && (b3.max.x - b3.min.x) > 0.5) {
+                minX = b3.min.x;
+                maxX = b3.max.x;
+                minZ = b3.min.z;
+                maxZ = b3.max.z;
+                baseY = Math.max(PALLET_STD_HEIGHT, b3.max.y);
+            }
+        }
+        return {
+            minX, maxX, minZ, maxZ, baseY,
+            width: (maxX - minX) * 1000,
+            length: (maxZ - minZ) * 1000
+        };
+    }
+
+    /**
      * =========================================================================
      * THUẬT TOÁN XẾP HÀNG TỰ ĐỘNG LÊN PALLET 3D (PALLET PACKING ALGORITHM)
      * =========================================================================
@@ -1729,9 +1823,10 @@
      *    - Trả về danh sách vị trí đã tính toán kèm thống kê chi tiết.
      */
     function packBoxesOnPallet(inputBoxes, options = {}) {
-        const palW = options.palletWidth || PALLET_STD_W; // 1100 mm
-        const palL = options.palletLength || PALLET_STD_L; // 1100 mm
-        const baseTopY = options.baseTopY !== undefined ? options.baseTopY : PALLET_STD_HEIGHT; // 0.14m
+        const dynamicBounds = options.palletBounds || null;
+        const palW = options.palletWidth || (dynamicBounds ? dynamicBounds.width : PALLET_STD_W); // 1100 mm
+        const palL = options.palletLength || (dynamicBounds ? dynamicBounds.length : PALLET_STD_L); // 1100 mm
+        const baseTopY = dynamicBounds ? dynamicBounds.baseY : (options.baseTopY !== undefined ? options.baseTopY : PALLET_STD_HEIGHT); // 0.14m
         const palletGroup = options.palletGroup || null;
         const margin = options.margin !== undefined ? options.margin : 5; // 5mm margin an toàn mép sàn
         const maxHeightMm = options.maxHeightMm || 2200; // Chiều cao tối đa an toàn (2.2m)
@@ -1802,7 +1897,6 @@
         ];
 
         // Hàm kiểm tra tính ổn định vật lý (Physical Support Check)
-        // Kiện hàng tầng trên phải được đặt trên bề mặt đỡ tầng dưới (>=85% diện tích) và tâm có điểm tựa
         function checkPhysicalSupport(candX, candZ, candW, candL, yBottom) {
             if (yBottom === 0) return true; // Trực tiếp trên mặt sàn pallet -> 100% vững chắc
 
@@ -2012,17 +2106,18 @@
         }
 
         // 4. YÊU CẦU ĐẦU RA: TÍNH TỌA ĐỘ 3D VÀ CẬP NHẬT TRỰC TIẾP MESH
-        const halfPalW = palW / 2000; // 0.55m
-        const halfPalL = palL / 2000; // 0.55m
+        const bStartX = dynamicBounds ? dynamicBounds.minX : (-palW / 2000);
+        const bStartZ = dynamicBounds ? dynamicBounds.minZ : (-palL / 2000);
+        const bBaseY = dynamicBounds ? dynamicBounds.baseY : baseTopY;
 
         const resultPacked = packedBoxes.map(p => {
             const wM = p.w / 1000;
             const lM = p.l / 1000;
             const hM = p.h / 1000;
 
-            const centerX_M = (p.x + p.w / 2) / 1000 - halfPalW;
-            const centerZ_M = (p.z + p.l / 2) / 1000 - halfPalL;
-            const centerY_M = baseTopY + (p.y / 1000) + (hM / 2);
+            const centerX_M = bStartX + (p.x + p.w / 2) / 1000;
+            const centerZ_M = bStartZ + (p.z + p.l / 2) / 1000;
+            const centerY_M = bBaseY + (p.y / 1000) + (hM / 2);
 
             const placedItem = {
                 id: p.box.id,
@@ -2082,7 +2177,7 @@
             unpackedCount: unpackedBoxes.length,
             totalWeight: totalWeight,
             totalHeightMm: maxCargoHMm,
-            totalHeightM: baseTopY + maxCargoHM,
+            totalHeightM: bBaseY + maxCargoHM,
             layersCount: layerCount,
             efficiency: Math.round(efficiencyPct * 10) / 10
         };
@@ -2184,11 +2279,16 @@
         pbControls.dampingFactor = 0.05;
         pbControls.enableZoom = true;
         pbControls.zoomSpeed = 0.45;
-        pbControls.minDistance = 0.8;
-        pbControls.maxDistance = 15.0;
+        pbControls.minDistance = 0.6; // Cự ly zoom gần nhất
+        pbControls.maxDistance = 4.5; // Giới hạn thu nhỏ: không bị mất model, luôn nhìn rõ toàn cảnh pallet
         pbControls.maxPolarAngle = Math.PI / 2.05;
         pbControls.rotateSpeed = 0.7;
         pbControls.target.set(0, 0.35, 0);
+
+        // Gắn hiệu ứng thu phóng theo vị trí con trỏ chuột
+        attachZoomToCursor(wrap, pbCamera, pbControls, pbScene, new THREE.Vector3(0, 0.35, 0), 0.6, 4.5, {
+            minX: -0.8, maxX: 0.8, minY: 0.1, maxY: 1.8, minZ: -0.8, maxZ: 0.8
+        });
 
         pbScene.add(new THREE.AmbientLight(0xffffff, 0.9));
         const dl = new THREE.DirectionalLight(0xffffff, 0.65); dl.position.set(5, 10, 7); pbScene.add(dl);
@@ -2208,6 +2308,7 @@
         pbGhost = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.5, visible: false, depthWrite: false }));
         pbScene.add(pbGhost);
 
+        // --- DRAG & DROP SNAP VỚI KIỂM TRA VA CHẠM AABB VÀ HOÀN TÁC ---
         wrap.addEventListener('mousedown', (e) => {
             if (!isCtrlPressed) return;
             const rect = wrap.getBoundingClientRect();
@@ -2218,11 +2319,15 @@
             if (hits.length > 0) {
                 pbControls.enabled = false;
                 pbDragged = hits[0].object;
-                pbDragged.position.y += 0.15;
-                pbDragged.children[0].children.forEach(c => { if (c.material) { c.material.transparent = true; c.material.opacity = 0.8; } });
                 const m = pbDragged.userData;
+                m.origX = pbDragged.position.x;
+                m.origY = pbDragged.position.y;
+                m.origZ = pbDragged.position.z;
+                pbDragged.position.y += 0.12;
+                pbDragged.children[0].children.forEach(c => { if (c.material) { c.material.transparent = true; c.material.opacity = 0.75; } });
                 pbGhost.geometry = new THREE.BoxGeometry(m.w, m.h, m.d);
-                pbGhost.position.set(pbDragged.position.x, m.origY, pbDragged.position.z);
+                pbGhost.position.set(m.origX, m.origY, m.origZ);
+                pbGhost.material.color.setHex(0x00ff00);
                 pbGhost.visible = true;
                 pbDragPlane.setFromNormalAndCoplanarPoint(new THREE.Vector3(0, 1, 0), pbDragged.position);
             }
@@ -2237,13 +2342,60 @@
             const ip = new THREE.Vector3();
             raycaster.ray.intersectPlane(pbDragPlane, ip);
             if (ip) {
+                const bounds = getPalletDynamicBounds();
                 const m = pbDragged.userData;
-                const limX = (PAL / 2) - m.hw;
-                const limZ = (PAL / 2) - m.hd;
-                ip.x = Math.max(-limX, Math.min(limX, ip.x));
-                ip.z = Math.max(-limZ, Math.min(limZ, ip.z));
-                pbDragged.position.x = ip.x; pbDragged.position.z = ip.z;
-                pbGhost.position.x = ip.x; pbGhost.position.z = ip.z;
+                const limMinX = bounds.minX + m.hw;
+                const limMaxX = bounds.maxX - m.hw;
+                const limMinZ = bounds.minZ + m.hd;
+                const limMaxZ = bounds.maxZ - m.hd;
+
+                ip.x = Math.max(limMinX, Math.min(limMaxX, ip.x));
+                ip.z = Math.max(limMinZ, Math.min(limMaxZ, ip.z));
+
+                // Snap X and Z theo lưới bội số kích thước box (bước nhảy m.w/2 hoặc 50mm)
+                const snapStepX = m.w >= 0.1 ? m.w / 2 : 0.05;
+                const snapStepZ = m.d >= 0.1 ? m.d / 2 : 0.05;
+                const snappedX = Math.round((ip.x - (bounds.minX + m.hw)) / snapStepX) * snapStepX + (bounds.minX + m.hw);
+                const snappedZ = Math.round((ip.z - (bounds.minZ + m.hd)) / snapStepZ) * snapStepZ + (bounds.minZ + m.hd);
+
+                const clampedSnapX = Math.max(limMinX, Math.min(limMaxX, snappedX));
+                const clampedSnapZ = Math.max(limMinZ, Math.min(limMaxZ, snappedZ));
+
+                // Tự động gán Y bằng mặt phẳng đỡ gần nhất (mặt pallet hoặc đỉnh box bên dưới)
+                let supportY = bounds.baseY;
+                pbHitBoxes.forEach(other => {
+                    if (other === pbDragged) return;
+                    const oData = other.userData;
+                    const oPos = other.position;
+                    const overlapX = Math.abs(clampedSnapX - oPos.x) < (m.w + oData.w) / 2 - 0.01;
+                    const overlapZ = Math.abs(clampedSnapZ - oPos.z) < (m.d + oData.d) / 2 - 0.01;
+                    if (overlapX && overlapZ) {
+                        const topY = oPos.y + oData.hh;
+                        if (topY > supportY) {
+                            supportY = topY;
+                        }
+                    }
+                });
+
+                const candY = supportY + m.hh;
+                pbDragged.position.set(ip.x, candY + 0.10, ip.z);
+                pbGhost.position.set(clampedSnapX, candY, clampedSnapZ);
+
+                // Kiểm tra va chạm để đổi màu ghost preview
+                let hasCollision = false;
+                for (let other of pbHitBoxes) {
+                    if (other === pbDragged) continue;
+                    const oData = other.userData;
+                    const oPos = other.position;
+                    const ovX = Math.abs(clampedSnapX - oPos.x) < (m.w + oData.w) / 2 - 0.005;
+                    const ovZ = Math.abs(clampedSnapZ - oPos.z) < (m.d + oData.d) / 2 - 0.005;
+                    const ovY = Math.abs(candY - oPos.y) < (m.h + oData.h) / 2 - 0.005;
+                    if (ovX && ovZ && ovY) {
+                        hasCollision = true;
+                        break;
+                    }
+                }
+                pbGhost.material.color.setHex(hasCollision ? 0xff0000 : 0x00ff00);
             }
         });
 
@@ -2252,12 +2404,54 @@
             pbControls.enabled = true;
             pbGhost.visible = false;
             pbDragged.children[0].children.forEach(c => { if (c.material) { c.material.transparent = false; c.material.opacity = 1.0; } });
+
+            const m = pbDragged.userData;
+            const candX = pbGhost.position.x;
+            const candY = pbGhost.position.y;
+            const candZ = pbGhost.position.z;
+            const bounds = getPalletDynamicBounds();
+
+            // Kiểm tra giới hạn sàn pallet
+            const inBounds = (candX - m.hw >= bounds.minX - 0.005) && (candX + m.hw <= bounds.maxX + 0.005) &&
+                             (candZ - m.hd >= bounds.minZ - 0.005) && (candZ + m.hd <= bounds.maxZ + 0.005);
+
+            // Kiểm tra va chạm (Collision AABB)
+            let hasCollision = false;
+            for (let other of pbHitBoxes) {
+                if (other === pbDragged) continue;
+                const oData = other.userData;
+                const oPos = other.position;
+                const ovX = Math.abs(candX - oPos.x) < (m.w + oData.w) / 2 - 0.005;
+                const ovZ = Math.abs(candZ - oPos.z) < (m.d + oData.d) / 2 - 0.005;
+                const ovY = Math.abs(candY - oPos.y) < (m.h + oData.h) / 2 - 0.005;
+                if (ovX && ovZ && ovY) {
+                    hasCollision = true;
+                    break;
+                }
+            }
+
+            if (inBounds && !hasCollision) {
+                pbDragged.position.set(candX, candY, candZ);
+                m.origX = candX;
+                m.origY = candY;
+                m.origZ = candZ;
+                showToast("Đã snap thùng vào vị trí pallet!", "success");
+            } else {
+                pbDragged.position.set(m.origX, m.origY, m.origZ);
+                showToast("Vị trí không hợp lệ hoặc bị va chạm! Đã hoàn tác vị trí.", "warning");
+            }
+
             pbDragged = null;
+            renderPbSkuTable();
         });
 
         window.addEventListener('keydown', (e) => {
             if ((e.key === 'r' || e.key === 'R') && isCtrlPressed && pbDragged) {
+                const m = pbDragged.userData;
+                const tmpW = m.w; m.w = m.d; m.d = tmpW;
+                const tmpHw = m.hw; m.hw = m.hd; m.hd = tmpHw;
                 pbDragged.children[0].rotation.y += Math.PI / 2;
+                pbGhost.geometry = new THREE.BoxGeometry(m.w, m.h, m.d);
             }
         });
 
@@ -2271,8 +2465,8 @@
         const maxH = pbBoxes.length > 0 ? Math.max(...pbBoxes.map(b => b.position.y + (b.userData.h || 0.1) / 2)) : 0.5;
         const centerY = Math.max(0.25, maxH / 2);
         pbControls.target.set(0, centerY, 0);
-        const dist = Math.max(2.1, maxH * 2.2);
-        pbCamera.position.set(dist * 0.9, Math.max(1.8, dist * 0.75), dist * 0.95);
+        const dist = Math.max(1.8, Math.min(3.6, maxH * 2.2));
+        pbCamera.position.set(dist * 0.9, Math.max(1.6, dist * 0.75), dist * 0.95);
         pbCamera.lookAt(0, centerY, 0);
         pbControls.update();
     }
@@ -2312,11 +2506,16 @@
             }
         });
 
+        // Lấy Bounding Box động của Model Pallet thực tế
+        const dynamicBounds = getPalletDynamicBounds();
+
         // Chạy thuật toán xếp hàng tự động lên Pallet
         const packingResult = packBoxesOnPallet(individualBoxes, {
-            palletWidth: PALLET_STD_W,
-            palletLength: PALLET_STD_L,
-            baseTopY: PALLET_STD_HEIGHT
+            palletWidth: dynamicBounds.width,
+            palletLength: dynamicBounds.length,
+            baseTopY: dynamicBounds.baseY,
+            palletBounds: dynamicBounds,
+            palletGroup: pbPalletGroup
         });
         pbLastPackingResult = packingResult;
 
@@ -2336,7 +2535,7 @@
 
             const hit = new THREE.Mesh(new THREE.BoxGeometry(p.w, p.h, p.d), new THREE.MeshBasicMaterial({ visible: false }));
             hit.position.copy(sMesh.position);
-            hit.userData = { hw: p.w / 2, hd: p.d / 2, hh: p.h / 2, origY: sMesh.position.y, w: p.w, d: p.d, h: p.h, code: p.code };
+            hit.userData = { hw: p.w / 2, hd: p.d / 2, hh: p.h / 2, origX: p.x, origY: p.y, origZ: p.z, w: p.w, d: p.d, h: p.h, code: p.code };
             hit.add(sMesh);
 
             pbScene.add(hit);
@@ -2395,7 +2594,7 @@
         
         const packQty = pbCurrentSelectedSku.packQty || 1;
         if (pcs <= 0) {
-            // Mặc định nạp 1 thùng nếu để trống
+            // Mặc định nạp 4 thùng nếu để trống
             pcs = packQty * 4;
         }
 
@@ -2425,7 +2624,7 @@
         }
 
         rebuildPallet3DLayout();
-        showToast(`Đã thêm ${boxCount} thùng mã ${pbCurrentSelectedSku.code} (${pcs} PCS)!`, "success");
+        showToast(`Đã thêm ${boxCount} thùng mã ${pbCurrentSelectedSku.code} (${pcs} PCS) và xếp tự động lên Pallet!`, "success");
         document.getElementById('pb_pcsInput').value = '';
     }
 

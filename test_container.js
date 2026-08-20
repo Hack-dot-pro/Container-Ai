@@ -338,6 +338,37 @@ assert(dummyMesh.position.y > 0.14, `Output Requirement 4: Box Mesh position.y (
 assert(htmlContent.includes('🛠 Xếp Pallet 3D'), 'Sidebar contains direct 🛠 Xếp Pallet 3D button');
 assert(htmlContent.includes('🛠 Mở Không Gian Xếp Pallet 3D'), 'Queue page contains prominent 🛠 Mở Không Gian Xếp Pallet 3D button');
 
+// 8. Zoom-to-Cursor & Dynamic Pallet Bounding Box Tests
+console.log('\n--- 8. Zoom to Cursor & Dynamic Pallet Bounding Box Fitting ---');
+assert(htmlContent.includes('attachZoomToCursor'), 'attachZoomToCursor function is present in index.html');
+assert(htmlContent.includes('getPalletDynamicBounds'), 'getPalletDynamicBounds function is present in index.html');
+
+// Test dynamic bounds packing
+const testPalletBounds = { minX: -0.55, maxX: 0.55, minZ: -0.55, maxZ: 0.55, baseY: 0.14, width: 1100, length: 1100 };
+const pinkBoxes = [
+    { id: 'pink_1', width: 200, length: 200, height: 100, weight: 1.2 },
+    { id: 'pink_2', width: 200, length: 200, height: 100, weight: 1.2 },
+    { id: 'pink_3', width: 200, length: 200, height: 100, weight: 1.2 },
+    { id: 'pink_4', width: 200, length: 200, height: 100, weight: 1.2 }
+];
+
+const dynPackRes = sandbox.packBoxesOnPallet(pinkBoxes, { palletBounds: testPalletBounds });
+assert(dynPackRes.packedCount === 4, 'All 4 pink 200x200x100 boxes packed on dynamic pallet');
+
+let allInsideDynamicPallet = true;
+dynPackRes.packed.forEach(p => {
+    if (p.x - p.w / 2 < testPalletBounds.minX - 1e-4 || p.x + p.w / 2 > testPalletBounds.maxX + 1e-4 ||
+        p.z - p.d / 2 < testPalletBounds.minZ - 1e-4 || p.z + p.d / 2 > testPalletBounds.maxZ + 1e-4 ||
+        p.y - p.h / 2 < testPalletBounds.baseY - 1e-4) {
+        allInsideDynamicPallet = false;
+    }
+});
+assert(allInsideDynamicPallet, 'All pink boxes fit 100% within dynamic pallet bounds (startX..maxX, startZ..maxZ, baseY)');
+
+// Test Zoom limits in index.html
+assert(htmlContent.includes('controls.maxDistance = 24.0'), 'Container 3D view zoom limit set to 24.0m (prevents model loss)');
+assert(htmlContent.includes('pbControls.maxDistance = 4.5'), 'Pallet 3D view zoom limit set to 4.5m (prevents model loss)');
+
 console.log('\n======================================================');
 console.log(`📊 TEST SUMMARY: ${testsPassed} passed, ${testsFailed} failed`);
 console.log('======================================================\n');
@@ -347,4 +378,5 @@ if (testsFailed > 0) {
 } else {
     process.exit(0);
 }
+
 
