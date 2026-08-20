@@ -239,6 +239,105 @@ assert(totalRowW <= cW, `2 rows of pallets (${totalRowW.toFixed(2)}m) fit inside
 assert(totalColL <= cL, `8 columns of pallets (${totalColL.toFixed(2)}m) fit inside container length (${cL}m)`);
 assert(totalTierH <= cH, `2 tiers of pallets + cargo (${totalTierH.toFixed(2)}m) fit inside container height (${cH}m)`);
 
+// 7. Full Pallet Packing Algorithm Tests (Rules 1-5)
+console.log('\n--- 7. Pallet Packing Algorithm (Priority Rules 1, 2, 3 & Requirements 4, 5) ---');
+const vm = require('vm');
+const sandbox = {
+    THREE: {
+        Vector2: function(x, y) { this.x = x; this.y = y; },
+        Vector3: function(x, y, z) { this.x = x; this.y = y; this.z = z; this.set = (x,y,z) => { this.x = x; this.y = y; this.z = z; }; },
+        Plane: function() {},
+        Group: function() { this.children = []; this.add = function(c) { this.children.push(c); }; },
+        Scene: function() { this.children = []; this.add = function(c) { this.children.push(c); }; },
+        BoxGeometry: function() {},
+        MeshBasicMaterial: function() {},
+        MeshStandardMaterial: function() {},
+        Mesh: function() { this.position = { set: (x,y,z) => { this.x = x; this.y = y; this.z = z; }, x:0, y:0, z:0 }; this.rotation = { y: 0 }; this.children = []; this.add = (c) => this.children.push(c); },
+        EdgesGeometry: function() {},
+        LineSegments: function() {},
+        LineBasicMaterial: function() {},
+        Color: function() {},
+        Raycaster: function() {}
+    },
+    document: {
+        getElementById: () => ({ innerText: '', value: '', clientWidth: 480, clientHeight: 420, appendChild: () => {}, addEventListener: () => {}, classList: { add: () => {}, remove: () => {} }, style: {} }),
+        querySelector: () => ({ innerHTML: '', addEventListener: () => {} }),
+        querySelectorAll: () => []
+    },
+    window: { addEventListener: () => {} },
+    localStorage: { getItem: () => null, setItem: () => {}, clear: () => {} }
+};
+vm.createContext(sandbox);
+vm.runInContext(scriptMatch[1], sandbox);
+
+assert(typeof sandbox.packBoxesOnPallet === 'function', 'packBoxesOnPallet function exists in index.html');
+assert(typeof sandbox.openPalletBuilder === 'function', 'openPalletBuilder function exists in index.html');
+
+// Test 7.1: Priority 1 (Weight DESC): Heavy boxes must be at bottom layer
+const mixedTestBoxes = [
+    { id: 'b_light_1', width: 250, length: 300, height: 150, weight: 2 },
+    { id: 'b_light_2', width: 250, length: 300, height: 150, weight: 2 },
+    { id: 'b_heavy_1', width: 350, length: 350, height: 200, weight: 30 },
+    { id: 'b_heavy_2', width: 350, length: 350, height: 200, weight: 30 },
+    { id: 'b_heavy_3', width: 350, length: 350, height: 200, weight: 30 },
+    { id: 'b_heavy_4', width: 350, length: 350, height: 200, weight: 30 },
+    { id: 'b_heavy_5', width: 350, length: 350, height: 200, weight: 30 },
+    { id: 'b_heavy_6', width: 350, length: 350, height: 200, weight: 30 },
+    { id: 'b_mid_1', width: 280, length: 320, height: 180, weight: 15 },
+    { id: 'b_mid_2', width: 280, length: 320, height: 180, weight: 15 }
+];
+
+const packRes = sandbox.packBoxesOnPallet(mixedTestBoxes, { palletWidth: 1100, palletLength: 1100 });
+assert(packRes.packedCount === mixedTestBoxes.length, `All ${mixedTestBoxes.length} mixed boxes successfully packed`);
+
+// Check heavy boxes are in layer 0
+const layer0Boxes = packRes.packed.filter(b => b.layer === 0);
+const heavyPackedInLayer0 = layer0Boxes.filter(b => b.weight === 30).length;
+assert(heavyPackedInLayer0 === 6, `Priority 1 (Weight DESC): All 6 heavy boxes (30kg) placed in bottom layer (layer 0)`);
+
+// Test 7.2: Pallet boundary limits (0 <= x + w <= 1100, 0 <= z + l <= 1100, y >= 0)
+let zeroOverflow = true;
+packRes.packed.forEach(p => {
+    if (p.xMm < 0 || p.xMm + p.placedWidthMm > 1100 || p.zMm < 0 || p.zMm + p.placedLengthMm > 1100 || p.yMm < 0) {
+        zeroOverflow = false;
+    }
+});
+assert(zeroOverflow, 'Pallet Bounds: 100% of boxes satisfy (0 <= x+w <= 1100 and 0 <= z+l <= 1100, y >= 0)');
+
+// Test 7.3: Priority 3 (Physical Stability): Upper boxes must be supported by lower boxes
+let stabilityPassed = true;
+packRes.packed.forEach(p => {
+    if (p.yMm > 0) {
+        // Check if there are boxes underneath with matching top height
+        const underBoxes = packRes.packed.filter(u => Math.abs((u.yMm + u.heightMm) - p.yMm) < 1.0);
+        let supportArea = 0;
+        underBoxes.forEach(u => {
+            const ix = Math.max(0, Math.min(p.xMm + p.placedWidthMm, u.xMm + u.placedWidthMm) - Math.max(p.xMm, u.xMm));
+            const iz = Math.max(0, Math.min(p.zMm + p.placedLengthMm, u.zMm + u.placedLengthMm) - Math.max(p.zMm, u.zMm));
+            supportArea += ix * iz;
+        });
+        const boxArea = p.placedWidthMm * p.placedLengthMm;
+        if (supportArea / boxArea < 0.85) {
+            stabilityPassed = false;
+        }
+    }
+});
+assert(stabilityPassed, 'Priority 3 (Physical Stability): Upper layer boxes are firmly supported by bottom boxes (0 floating)');
+
+// Test 7.4: Mesh coordinate and rotation update
+const dummyMesh = {
+    position: { x: 0, y: 0, z: 0, set: function(x, y, z) { this.x = x; this.y = y; this.z = z; } },
+    rotation: { y: 0 }
+};
+const singleMeshTest = [{ id: 'box_mesh_1', width: 300, length: 400, height: 200, weight: 10, mesh: dummyMesh }];
+const meshRes = sandbox.packBoxesOnPallet(singleMeshTest, { baseTopY: 0.14 });
+assert(meshRes.packedCount === 1, 'Single box with mesh packed');
+assert(dummyMesh.position.y > 0.14, `Output Requirement 4: Box Mesh position.y (${dummyMesh.position.y.toFixed(3)}m) updated above pallet deck`);
+
+// Test 7.5: Direct button access without selecting small item
+assert(htmlContent.includes('🛠 Xếp Pallet 3D'), 'Sidebar contains direct 🛠 Xếp Pallet 3D button');
+assert(htmlContent.includes('🛠 Mở Không Gian Xếp Pallet 3D'), 'Queue page contains prominent 🛠 Mở Không Gian Xếp Pallet 3D button');
+
 console.log('\n======================================================');
 console.log(`📊 TEST SUMMARY: ${testsPassed} passed, ${testsFailed} failed`);
 console.log('======================================================\n');
@@ -248,3 +347,4 @@ if (testsFailed > 0) {
 } else {
     process.exit(0);
 }
+
