@@ -369,6 +369,15 @@ assert(allInsideDynamicPallet, 'All pink boxes fit 100% within dynamic pallet bo
 assert(htmlContent.includes('controls.maxDistance = 24.0'), 'Container 3D view zoom limit set to 24.0m (prevents model loss)');
 assert(htmlContent.includes('pbControls.maxDistance = 4.5'), 'Pallet 3D view zoom limit set to 4.5m (prevents model loss)');
 
+// 9. UI & Customization Requirements (Settings Menu, Watermark, Hint Text, 3D Canvas Size)
+console.log('\n--- 9. UI & Customization Requirements ---');
+assert(!htmlContent.includes('data-page="settings"'), 'Cài Đặt menu item is removed from sidebar');
+assert(!htmlContent.includes('id="page-settings"'), 'Cài Đặt page section is removed');
+assert(htmlContent.includes('ENGINEERED BY VINH © 2026'), 'Watermark "ENGINEERED BY VINH © 2026" is present');
+assert(htmlContent.includes('🎯 Cuộn chuột: Phóng to thu nhỏ | Chuột trái: Xoay 360° | Chuột phải: Dịch chuyển góc nhìn'), 'Updated 3D view instruction text is present');
+assert(htmlContent.includes('style="height:590px;"') || htmlContent.includes('590px'), 'Container 3D canvas height is increased by 5% (590px)');
+assert(htmlContent.includes('1.47fr'), 'Container 3D layout column width is increased by 5% (1.47fr)');
+
 console.log('\n======================================================');
 console.log(`📊 TEST SUMMARY: ${testsPassed} passed, ${testsFailed} failed`);
 console.log('======================================================\n');
