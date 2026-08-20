@@ -279,14 +279,14 @@
         /* ============ WATERMARK BADGE ============ */
         .engineered-badge {
             position: fixed;
-            bottom: 12px;
-            right: 18px;
-            font-size: 10px;
+            bottom: 10px;
+            right: 16px;
+            font-size: 8.5px;
             font-weight: 800;
-            letter-spacing: 1.5px;
+            letter-spacing: 1.2px;
             text-transform: uppercase;
             color: var(--navy);
-            opacity: 0.35;
+            opacity: 0.28;
             pointer-events: none;
             z-index: 9999;
             user-select: none;
@@ -602,14 +602,14 @@
 
         <!-- ============ PAGE: CONTAINERS & 3D ============ -->
         <section id="page-containers" class="page">
-            <div class="layout-2col" style="grid-template-columns: 1fr 1.47fr; align-items:start;">
+            <div class="layout-2col" style="grid-template-columns: 1fr 1.55fr; align-items:start;">
                 <div id="containersArea" class="cont-grid" style="grid-template-columns:1fr;"></div>
                 <div class="result-3d-view">
                     <div class="view3d-header">
                         <span id="view3dTitle">Mô Phỏng 3D Container</span>
-                        <span class="hint">🎯 Cuộn chuột: Phóng to thu nhỏ | Chuột trái: Xoay 360° | Chuột phải: Dịch chuyển góc nhìn</span>
+                        <span class="hint">🎯 Cuộn chuột: Phóng to thu nhỏ | Chuột trái: Xoay 360° | Chuột phải: Dịch chuyển góc nhìn | CTRL + Chuột trái để di chuyển vị trí hàng</span>
                     </div>
-                    <div id="canvas3D-container" style="height:590px;"></div>
+                    <div id="canvas3D-container" style="height:620px;"></div>
                 </div>
             </div>
         </section>
@@ -673,7 +673,7 @@
                 <div class="tip-text" style="margin:0; font-size:11.5px; padding:8px 10px;">
                     <b>Quy tắc & Thao tác 3D:</b><br>
                     - <b>🎯 Cuộn chuột:</b> Phóng to thu nhỏ | <b>Chuột trái:</b> Xoay 360° | <b>Chuột phải:</b> Dịch chuyển góc nhìn<br>
-                    - <b>Kéo thả:</b> Giữ <b>CTRL + Chuột trái</b> để bốc xếp kiện | Phím <b>R</b>: Xoay 90°<br>
+                    - <b>Kéo thả:</b> Giữ <b>CTRL + Chuột trái</b> để di chuyển vị trí hàng | Phím <b>R</b>: Xoay 90°<br>
                     - <b>Tự động:</b> Trọng tải nặng nhất nằm dưới, lấp đầy sàn pallet trước khi lên tầng
                 </div>
             </div>
@@ -1547,7 +1547,7 @@
         const containerDom = document.getElementById('canvas3D-container');
         if (!containerDom) return;
         const w = containerDom.clientWidth || 600;
-        const h = containerDom.clientHeight || 590;
+        const h = containerDom.clientHeight || 620;
 
         scene = new THREE.Scene(); scene.background = new THREE.Color(0x1a252f);
         camera = new THREE.PerspectiveCamera(45, w/h, 0.1, 1000); camera.position.set(0, 7, 18);
@@ -1651,6 +1651,8 @@
 
         // --- RAYCAST GHOST (CTRL + kéo, R xoay) ---
         function onContDragStart(e) {
+            // Khóa cứng: Chỉ cho phép di chuyển model box khi giữ CTRL + Chuột trái (button === 0)
+            if (e.button !== undefined && e.button !== 0) return;
             if (!isCtrlPressed && !e.ctrlKey && !e.metaKey) return;
             const rect = containerDom.getBoundingClientRect();
             const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
@@ -2309,6 +2311,8 @@
 
         // --- DRAG & DROP SNAP VỚI KIỂM TRA VA CHẠM AABB VÀ HOÀN TÁC ---
         function onDragStart(e) {
+            // Khóa cứng: Chỉ cho phép di chuyển model box khi giữ CTRL + Chuột trái (button === 0)
+            if (e.button !== undefined && e.button !== 0) return;
             if (!isCtrlPressed && !e.ctrlKey && !e.metaKey) return;
             const rect = wrap.getBoundingClientRect();
             const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
@@ -2545,18 +2549,18 @@
             const sGeo = new THREE.BoxGeometry(p.w - 0.003, p.h - 0.003, p.d - 0.003);
             const sMesh = new THREE.Mesh(sGeo, materials);
             sMesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(sGeo), new THREE.LineBasicMaterial({ color: 0x000000 })));
-            sMesh.position.set(p.x, p.y, p.z);
+            sMesh.position.set(0, 0, 0); // Đặt tại (0,0,0) bên trong hit box để không bị offset lệch chiều cao
             sMesh.rotation.y = p.rotationY;
             sMesh.userData = { w: p.w, d: p.d, h: p.h, code: p.code, weight: p.weight, layer: p.layer };
 
             const hit = new THREE.Mesh(new THREE.BoxGeometry(p.w, p.h, p.d), new THREE.MeshBasicMaterial({ visible: false }));
-            hit.position.copy(sMesh.position);
+            hit.position.set(p.x, p.y, p.z); // World position của Box đặt trực tiếp trên mặt sàn Pallet
             hit.userData = { hw: p.w / 2, hd: p.d / 2, hh: p.h / 2, origX: p.x, origY: p.y, origZ: p.z, w: p.w, d: p.d, h: p.h, code: p.code };
             hit.add(sMesh);
 
             pbScene.add(hit);
             pbHitBoxes.push(hit);
-            pbBoxes.push(sMesh);
+            pbBoxes.push(hit);
             p.mesh = hit;
         });
 
@@ -2702,7 +2706,7 @@
             x: b.position.x,
             y: b.position.y,
             z: b.position.z,
-            ry: b.rotation.y,
+            ry: (b.children && b.children[0] && b.children[0].rotation) ? b.children[0].rotation.y : (b.rotation ? b.rotation.y : 0),
             w: (b.userData && b.userData.w) || 0.2,
             d: (b.userData && b.userData.d) || 0.2,
             h: (b.userData && b.userData.h) || 0.1,

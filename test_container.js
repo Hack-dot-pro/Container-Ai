@@ -374,9 +374,12 @@ console.log('\n--- 9. UI & Customization Requirements ---');
 assert(!htmlContent.includes('data-page="settings"'), 'Cài Đặt menu item is removed from sidebar');
 assert(!htmlContent.includes('id="page-settings"'), 'Cài Đặt page section is removed');
 assert(htmlContent.includes('ENGINEERED BY VINH © 2026'), 'Watermark "ENGINEERED BY VINH © 2026" is present');
-assert(htmlContent.includes('🎯 Cuộn chuột: Phóng to thu nhỏ | Chuột trái: Xoay 360° | Chuột phải: Dịch chuyển góc nhìn'), 'Updated 3D view instruction text is present');
-assert(htmlContent.includes('style="height:590px;"') || htmlContent.includes('590px'), 'Container 3D canvas height is increased by 5% (590px)');
-assert(htmlContent.includes('1.47fr'), 'Container 3D layout column width is increased by 5% (1.47fr)');
+assert(htmlContent.includes('font-size: 8.5px;') || htmlContent.includes('font-size:8.5px;'), 'Watermark font size is reduced to 8.5px');
+assert(htmlContent.includes('🎯 Cuộn chuột: Phóng to thu nhỏ | Chuột trái: Xoay 360° | Chuột phải: Dịch chuyển góc nhìn | CTRL + Chuột trái để di chuyển vị trí hàng'), 'Updated 3D view instruction text is present');
+assert(htmlContent.includes('style="height:620px;"') || htmlContent.includes('620px'), 'Container 3D canvas height is increased by 5% (620px)');
+assert(htmlContent.includes('1.55fr'), 'Container 3D layout column width is increased by 5% (1.55fr)');
+assert(htmlContent.includes('if (e.button !== undefined && e.button !== 0) return;'), 'Model box drag strictly locked to CTRL + Left Click (e.button === 0)');
+assert(htmlContent.includes('sMesh.position.set(0, 0, 0);'), 'Box mesh placed at (0,0,0) locally inside hit box to prevent floating');
 
 console.log('\n======================================================');
 console.log(`📊 TEST SUMMARY: ${testsPassed} passed, ${testsFailed} failed`);
